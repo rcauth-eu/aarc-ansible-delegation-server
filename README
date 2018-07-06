@@ -1,0 +1,64 @@
+####################################################################################################
+Ansible Deploy Script for Delegation Server
+####################################################################################################
+
+How to use these scripts?
+
+        Before you can use these scripts, there are a couple of deployments
+        specific setting you will have to tweak.
+
+        1. It is assumed that you are configuring a single machine to be The
+           Delegation Server. This target machine is configured in an inventory
+           file called 'testnet-delegserver' by its hostname/ip.
+           In case you want to configure more than one target, add your target
+           hostnames/ips to the '[delegserver]' group in the
+           'testnet-delegserver' inventory file.
+
+        2. Configure every host specific variable in the 'host_vars' directory
+           for each of your targets from 1. Use the already existing file under
+           'host_vars' to see which variables to set 
+
+        3. You should configure your environment specific varaibles in
+           'cafrontend_env.yml' and 'delegserver_env.yml'. These files contain
+           default from the two ansible roles: cafrontend and delegserver. Some
+           of them you may leave as default (some standard paths like
+           /etc/grid-security/), but others you should definitaly change
+           (passwords, urls)!
+
+        4. Make sure to look through the template files under
+           'roles/cafrontend/templates' and 'roles/delegserver/templates'.
+           Infrastructure specific information, such as iptables rules can be
+           found here. Make sure to customize these templates to your specific
+           infrastructure.
+
+        5. These deployment scripts do not contain the actual Delegation Server
+           package (oauth2.war) or it's helper tools (oa2-cli.jar)! This is
+           because these deployment scripts are meant to be used with any
+           Delegation Server version/flavour. Make sure to replace the .jar and
+	   .war files marked .PLACEHOLDER under 'roles/delegserver/files/' with
+	   the real software you want to deploy!
+           For rebuilding, see
+            https://github.com/rcauth-eu/aarc-delegation-server
+           which builds
+            ./delegation-server/target/oauth2.war
+           For rebuilding the oa2-cli.jar you need to enable the cli profile
+           (see ./oa4mp-server-admin-oauth2/pom.xml)
+            mvn -P cli package
+           which builds
+            ./delegation-server/target/oa2-cli.jar
+	
+	6. You need to create a JSON Web Keys file to replace the
+	   ds.jwk.PLACEHOLDER file in 'roles/delegserver/files/'
+	   - Create a dummy config file:
+	      echo '<config>\n<service/>\n</config>' > tmp.conf
+	   - Run the oa2-cli tool locally:
+	      java -jar ./roles/delegserver/files/oa2-cli.jar -cfg tmp.conf
+	   - Choose "use keys" then run "create"
+	   - Choose as filename './roles/delegserver/files/ds.jwk'
+	   - exit the commandline tool (enter 'exit' twice)
+	   - remove the 'tmp.conf' file
+	   Lookup the 'kid' in the created file, use e.g. the RS256 key and
+	   enter the value as 'oa4mp_server_jwk_key_id' in 'delegserver_env.yml'
+
+        7. Execute: 'ansible-playbook -i testnet-delegserver delegserver.yml'.
+           Time to grab a coffee (or lunch)! 

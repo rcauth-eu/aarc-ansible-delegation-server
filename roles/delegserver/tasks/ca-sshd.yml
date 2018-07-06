@@ -1,0 +1,25 @@
+---
+
+# This task has a counterpart in the cafrontend role where passwords are enabled
+# for the backend. Here they are again disabled.
+# Note that the basic role sets the overall policy to disabled.
+
+# Add specific block for password-based logins from the CA
+- name: disable ssh password logins for backend
+  blockinfile:
+    dest: /etc/ssh/sshd_config
+    marker: "# {mark} backend CA password policy"
+    insertafter: EOF
+    backup: yes
+    block: |
+        Match address {{ private_ca_address }}/32
+           # Enable pw authN here when updating the ssh keys
+           PasswordAuthentication no
+  notify: restart sshd
+  when: not private_ca_address == private_ds_address
+
+# Restart sshd directly (also: we don't have the handler from the basic role)
+- name: restart sshd
+  service:
+    name: sshd
+    state: restarted

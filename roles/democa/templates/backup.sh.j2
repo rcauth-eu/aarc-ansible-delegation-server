@@ -1,0 +1,9 @@
+#!/bin/sh
+# Don't include trailing / in input paths, since we want the dir itself also
+# Log what we're doing to /var/log/rsync_backup.log
+# redirect stdout to /dev/null since it already is logged in rsync log-file
+rsync -rvaHDS --numeric-ids --delete --delete-excluded \
+    --log-file=/var/log/rsync_backup.log \
+    {{ democa_dir }} /var/log \
+    {{ ca_backup_user }}@{{ private_ds_fqdn }}:{{ ca_backup_backup }} \
+    > /dev/null

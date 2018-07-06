@@ -1,0 +1,18 @@
+authorized_retrievers "{{ democa_authorized_retrievers }}"
+trusted_retrievers "{{ democa_authorized_retrievers }}"
+default_trusted_retrievers "{{ democa_authorized_retrievers }}"
+
+cert_dir {{ x509_cert_dir }}
+
+certificate_issuer_cert {{ democa_dir }}/cacert.pem
+certificate_issuer_key {{ democa_dir }}/private/cakey.pem
+certificate_issuer_key_passphrase "{{ democa_pass }}"
+certificate_serialfile {{ democa_dir }}/serial
+certificate_out_dir {{ democa_dir }}/newcerts
+
+certificate_mapapp {{ democa_extra_dir }}/myproxy-certificate-mapapp
+
+max_cert_lifetime {{ democa_cert_lifetime }}
+
+# Log to non-standard facility
+syslog_facility local5

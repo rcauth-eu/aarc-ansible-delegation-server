@@ -1,0 +1,162 @@
+#!/bin/sh
+
+# Check we're root
+if [ $(id -u) -ne 0 ];then
+    echo "Need to be root"
+    exit 1
+fi
+
+# Set hostname, should be the two commandline options
+if [ $# -ne 2 ];then
+    echo "Usage: $0 <CA host> <frontend host>"
+    exit 1
+fi
+CAHOST="$1"
+FRHOST="$2"
+
+COUNTRY="{{ private_ca_country }}"
+ORGANIZATION="{{ private_ca_org }}"
+BASEDN="/C=$COUNTRY/O=$ORGANIZATION"
+
+
+# Set default umask to be closed
+umask 0077
+
+# Cleanup existing directory
+CA="{{ canet_dir }}"
+rm -rf ${CA}
+
+# Setup basic directory structure
+mkdir -p ${CA}/{newcerts,private}
+touch ${CA}/index.txt
+touch ${CA}/index.txt.attr
+echo 01 > ${CA}/serial
+
+cat > ${CA}/openssl.cnf << EOF
+RANDFILE                = /dev/urandom
+HOST = ""
+
+[ ca ]
+default_ca	 = root_ca
+
+[ root_ca ]
+dir		 = $CA
+database	 = \$dir/index.txt
+serial           = \$dir/serial
+new_certs_dir    = \$dir/newcerts
+certificate      = \$dir/cacert.pem
+private_key      = \$dir/private/cakey.pem
+default_days     = 36525
+default_crl_days = 36525
+default_md       = sha256
+prompt           = no
+x509_extensions	 = user_extensions
+policy           = policy_match
+
+[ policy_match ]
+countryName            = supplied
+organizationName       = supplied
+commonName             = supplied
+
+[ req ]
+default_bits            = 4096
+utf8                    = yes
+string_mask             = utf8only
+default_md              = sha256
+default_days		= 36525
+distinguished_name      = req_distinguished_name
+x509_extensions         = ca_extensions
+
+[ req_distinguished_name ]
+countryName                     = Country
+countryName_default             = $COUNTRY
+organizationName                = Organization
+organizationName_default        = $ORGANIZATION
+commonName                      = Common Name
+
+[ ca_extensions ]
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, keyCertSign, cRLSign
+subjectKeyIdentifier = hash
+
+[ user_extensions ]
+basicConstraints = critical, CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+authorityKeyIdentifier = keyid,issuer
+subjectKeyIdentifier = hash
+subjectAltName = DNS:\$ENV::HOST
+EOF
+export OPENSSL_CONF=${CA}/openssl.cnf
+
+# Create root CA, need to specify days by hand
+openssl req -new -batch -nodes -newkey rsa \
+    -keyout ${CA}/private/cakey.pem -x509 -out ${CA}/cacert.pem \
+    -days 36525 -subj "${BASEDN}/CN=CANET-rootCA"
+cahash=$(openssl x509 -hash -noout -in ${CA}/cacert.pem)
+
+# Create empty longlived CRL
+openssl ca -gencrl -out ${CA}/${cahash}.r0
+
+# Function to create different hostcert directories and their content
+createcert() {
+    export HOST=$1
+
+    mkdir -p ${CA}/${HOST}/certificates
+    # Create request 
+    openssl req -new -batch -nodes -newkey rsa \
+	-keyout ${CA}/${HOST}/hostkey.pem -out ${CA}/certreq.pem \
+	-subj "${BASEDN}/CN=$HOST"
+    if [ $? -ne 0 ];then
+	echo "Making request failed, check ${CA}" >&2
+	exit 1
+    fi
+    # Sign certificate
+    openssl ca -batch -notext -out ${CA}/${HOST}/hostcert.pem \
+	-in ${CA}/certreq.pem -preserveDN
+    if [ $? -ne 0 ];then
+	echo "Signing certificate failed, check ${CA}" >&2
+	exit 1
+    fi
+    # Remove request
+    rm ${CA}/certreq.pem
+
+    # Copy/create CA files
+    cp -p ${CA}/cacert.pem ${CA}/${cahash}.r0 ${CA}/${HOST}/certificates/
+    ln -s cacert.pem ${CA}/${HOST}/certificates/${cahash}.0
+    cat > ${CA}/${HOST}/certificates/${cahash}.signing_policy << EOF
+# Internal canet X.509 authority
+ access_id_CA      X509     '${BASEDN}/CN=CANET-rootCA'
+ pos_rights        globus   CA:sign
+ cond_subjects     globus   '"${BASEDN}/CN=CANET-rootCA" "${BASEDN}/CN=*"'
+EOF
+
+    # Open certificates directory
+    chmod a+rx ${CA}/${HOST}/certificates/
+    chmod a+r ${CA}/${HOST}/certificates/*
+
+    # Make a tarball
+    tarball=${CA}/${HOST}.tgz
+    tar -zcf ${tarball} -C ${CA}/$HOST certificates hostcert.pem hostkey.pem || {
+	echo "Creating tarball ${tarball} failed" >&2
+	exit 1
+    }
+
+    # Remove all but the hostcert itself
+    rm -rf ${CA}/${HOST}/certificates/ ${CA}/${HOST}/hostkey.pem
+
+    echo "$HOST files left in ${tarball}";echo
+    unset HOST
+}
+
+if [ "$CAHOST" != "$FRHOST" ];then
+    # Create myproxy server (online CA) hostcert/key
+    createcert $CAHOST
+fi
+
+# Create delegation server hostcert/key
+createcert $FRHOST
+
+# Remove CA files, including private key
+rm ${CA}/{newcerts/??.pem,cacert.pem,private/cakey.pem,index.txt*,serial*,${cahash}.r0,openssl.cnf}
+rmdir ${CA}/{newcerts,private}

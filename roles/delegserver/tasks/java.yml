@@ -1,0 +1,20 @@
+---
+
+# Install Oracle JRE
+
+- name: copy jre RPM
+  copy:
+    src: jre.rpm
+    dest: /tmp/jre.rpm
+- name: install java jre RPM
+  yum:
+    name: /tmp/jre.rpm
+    state: present
+- name: JAVA_HOME present in bashrc
+  lineinfile:
+    dest: /etc/bashrc
+    state: present
+    line: "export JAVA_HOME={{ java_home }}"
+    regexp: "^export JAVA_HOME=.*"
+    insertafter: EOF
+    backup: yes

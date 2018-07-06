@@ -1,0 +1,15 @@
+---
+
+- name: restart myproxy
+  systemd:
+    name: myproxy-server
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+- name: restart rsyslog
+  service:
+    name: rsyslog
+    state: restarted
+
+  

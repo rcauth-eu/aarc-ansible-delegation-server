@@ -1,0 +1,16 @@
+uid = root
+gid = root
+use chroot = yes
+max connections = 10
+syslog facility = daemon
+pid file = /var/run/rsyncd.pid
+
+[backuproot]
+       path = {{ rsync_path }}
+       comment = {{ ansible_hostname }}:/
+       read only = yes
+       list = false
+       auth users = backup
+       secrets file = /etc/rsyncd.secrets
+       hosts allow = {{ rsync_hosts }}
+       hosts deny = 0.0.0.0/0

@@ -1,0 +1,18 @@
+---
+
+- name: yum update machine
+  yum: 
+    name: '*'
+    state: latest
+
+- name: install general packages
+  yum: 
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ general_packages }}"
+
+- name: install extra packages for dependencies
+  yum: 
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ extra_packages }}"

@@ -1,0 +1,78 @@
+---
+########################################################################
+### DEFAULT VALUES FOR THE common ROLE
+########################################################################
+
+### You must define or override the private and public DS interfaces
+### For a *co-hosted* demoCA you want to override the latter 2 to lo
+#public_ds_interface: eth0
+#private_ds_interface: eth1
+#private_ca_interface: eth0
+
+#public_ds_interface: eth0
+#private_ds_interface: lo
+#private_ca_interface: lo
+
+### Private network between frontend and backend CA
+### For a *co-hosted* demoCA you want to override these to 127.0.0.1
+#private_network: 127.0.0.1/32
+#private_ds_address: 127.0.0.1
+#private_ca_address: 127.0.0.1
+
+private_network: 192.168.1.0/24
+private_ds_address: 192.168.1.254
+private_ca_address: 192.168.1.1
+
+
+### NTP Server
+ntp_servers: 
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+
+
+### SSH Authorized users taken from LDAP
+#authorized_uids:
+#  - admin1
+#  - admin2
+
+
+### CA BaseDN in LDAP format, must be set to the correct value corresponding
+### with the CA. Only used by delegserver, easier to set here since we know
+### whether we use a demo CA. Can be based on the demoCA's O and OU set below.
+#ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
+
+########################################################################
+### Normally there is no need to override any of the following
+########################################################################
+
+### MyProxy port
+private_ca_port: 7512
+
+### Domain and hostnames for the private network
+private_domain: canet
+private_ds_hostname: frontend
+private_ds_fqdn: "{{ private_ds_hostname }}.{{ private_domain }}"
+private_ca_hostname: ca
+private_ca_fqdn: "{{ private_ca_hostname }}.{{ private_domain }}"
+
+### Hostcert CA for the private network
+private_ca_country: NL
+private_ca_org: CANET
+private_ca_basedn: "O={{ private_ca_org }},C={{ private_ca_country }}"
+
+private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
+
+### Settings for the backup account for a backup from the CA
+ca_backup_user: "ca_backup"
+ca_backup_home: "/var/lib/{{ ca_backup_user }}"
+ca_backup_backup: "{{ ca_backup_home }}/backup"
+
+ca_backup_pubkey_input: "/root/authorized_keys"
+
+### MyProxy CA: these settings are only used when running the demoCA
+democa_name: demoCA
+democa_tarball: demoCA.tgz
+
+democa_cn: "Simple CA for Demo RCauth"
+democa_ou: "Example"
+democa_o: "Test"

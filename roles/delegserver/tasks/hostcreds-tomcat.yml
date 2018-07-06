@@ -1,0 +1,59 @@
+---
+
+# place trust and key stores
+# Do not do this part when we co-host the myproxy server on the DS.
+# NOTE: we need to run dep-tomcat and oa4mp-server first, to have the tomcat
+# user and to have /var/www/server/conf
+
+- name: look for private credentials archive
+  stat: 
+    path: "{{ private_dscreds_tarball }}"
+  register: priv_creds
+
+- name: create private credential temp dir
+  tempfile: 
+    state: directory
+    prefix: private_creds.
+    path: /root
+  register: private_creds_tmp
+  when: priv_creds.stat.exists
+
+- name: unpack private credentials
+  unarchive:
+    src: "{{ private_dscreds_tarball }}"
+    dest: "{{ private_creds_tmp.path }}"
+    copy: no
+  when: priv_creds.stat.exists 
+
+- name: create private trusted certificates dir and set attributes
+  file:
+    path: "{{ oa4mp_server_certificates_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+  when: priv_creds.stat.exists
+
+- name: copy private trusted certificates
+  shell: "cp -f {{ private_creds_tmp.path }}/certificates/* {{ oa4mp_server_certificates_dir }}"
+  when: priv_creds.stat.exists
+
+- name: add hostcert to keystore
+  command: openssl pkcs12 -export -in "{{ private_creds_tmp.path }}/hostcert.pem" -inkey "{{ private_creds_tmp.path }}/hostkey.pem" -out "{{ oa4mp_server_keystore }}" -name hostcred -CApath "{{ private_creds_tmp.path }}/certificates" -chain -passout "pass:{{ oa4mp_server_keystore_pw }}"
+  when: priv_creds.stat.exists
+
+- name: add the right permission to the key store
+  file:
+    path: "{{ oa4mp_server_keystore }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0400
+  when: priv_creds.stat.exists
+
+- name: remove private credentials temporary files and dir
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+#    - "{{ private_dscreds_tarball }}"
+    - "{{ private_creds_tmp.path }}" 
+  when: priv_creds.stat.exists

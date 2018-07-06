@@ -1,0 +1,18 @@
+---
+
+# check on the CA node periodically and send email if it is down
+
+- name: copy ca_checker to sbin
+  template:
+    src: ca_checker.sh.j2
+    dest: /usr/local/sbin/ca_checker.sh
+    owner: root
+    group: root
+    mode: 0744
+
+- name: add cron job to run ca_checker script
+  file:
+     src: /usr/local/sbin/ca_checker.sh
+     dest: /etc/cron.hourly/ca_checker.cron
+     owner: root
+     state: link

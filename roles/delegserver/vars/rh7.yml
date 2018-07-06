@@ -1,0 +1,117 @@
+---
+
+### enabled and disabled services
+enabled_services: 
+ - tomcat
+ - httpd
+ - shibd
+ - mariadb
+
+### general package dependencies
+
+extra_packages:
+ - rsync
+
+### java constants
+
+#java_download_url: "https://javadl.sun.com/webapps/download/AutoDL?BundleId=114680"
+#javax_mail_url: "https://java.net/projects/javamail/downloads/download/javax.mail.jar"
+#javax_mail_url: "https://github.com/javaee/javamail/releases/download/JAVAMAIL-1_6_1/javax.mail.jar"
+java_home: /usr/java/default
+
+### tomcat constants
+
+tomcat_packages:
+ - tomcat
+ - tomcat-admin-webapps
+
+catalina_home: /usr/share/tomcat
+tomcat_user: tomcat
+tomcat_service: tomcat
+
+### apache
+
+httpd_packages:
+  - httpd
+  - httpd-tools
+  - mod_ssl
+
+httpd_service: httpd
+httpd_web_root: /var/www/html
+
+### IGTF
+
+igtfkey: "https://dl.igtf.net/distribution/igtf/current-new/GPG-KEY-EUGridPMA-RPM-3"
+igtf_current_baseurl: "http://dist.eugridpma.info/distribution/igtf/current-new/"
+
+### shibboleth
+
+shibboleth_baseurl: "http://download.opensuse.org/repositories/security:/shibboleth/CentOS_7/"
+shibboleth_gpgkey: "https://api.opensuse.org/public/source/security:shibboleth/_pubkey"
+
+shib_packages:
+  - shibboleth
+
+shib_service: shibd
+
+shib_httpd_conf: /etc/httpd/conf.d/shib.conf
+shib_attr_map_file: /etc/shibboleth/attribute-map.xml
+shib_attr_policy_file: /etc/shibboleth/attribute-policy.xml
+shib_conf_file: /etc/shibboleth/shibboleth2.xml
+
+shib_attr_map:
+  - {name: "urn:oid:2.5.4.3", id: "cn"}
+  - {name: "urn:oid:0.9.2342.19200300.100.1.1", id: "uid"}
+  - {name: "urn:oid:0.9.2342.19200300.100.1.3", id: "mail"}
+  - {name: "urn:oid:2.16.840.1.113730.3.1.241", id: "displayName"}
+  - {name: "urn:oid:2.5.4.42", id: "givenName"}
+  - {name: "urn:oid:2.5.4.4", id: "sn"}
+  - {name: "urn:oid:1.3.6.1.4.1.25178.1.2.9", id: "schacHomeOrganization"}
+  - {name: "urn:oid:2.5.4.10", id: "o"}
+
+### mysql
+
+# NOTE
+# THERE IS NO MYSQL PACKAGE IN CENTOS7 SINCE IT COMES WITH THE MARIADB IMPLEMENTATION
+# YOU CAN INSTALL MTSQL FROM THE REPOSITORY BELOW, BUT THIS WILL NOT WORK PROPERLY 
+
+#mysql_repo_baseurl: http://repo.mysql.com/yum/mysql-5.7-community/el/7/$basearch/
+#mysql_repo_connectors_baseurl: http://repo.mysql.com/yum/mysql-connectors-community/el/7/$basearch/
+#mysql_repo_gpgkey: https://repo.mysql.com/RPM-GPG-KEY-mysql
+
+#mysql_packages:
+#  - mysql-community-server
+#  - mysql-connector-java
+#  - mysql-connector-python
+
+#mysql_root_password: changeme
+
+### mariadb
+
+# NOTE
+# THE MARIADB PACKAGES ARE IN THE CENTOS7 REPOS, BUT THERE IS NO MARIADB JDBC CONNECTOR PROVIDED
+# THE CONNECTOR DOWLOADED FROM THE OFFICIAL MARIADB WEBPAGE DOES NOT WORK PROPERLY ON CENTOS7
+# THEREFOR WE USE THE CONNECTOR PROVIDED BY MYSQL INSTEAD.
+
+# THE ABOVE EFFECTIVELY MEANS THAT OA4MP WILL RUN WITH 'MYSQL' CONNECTOR AND IMPLEMENTATION
+# BUT THE UNDERLYING DATABASE WILL ACTUALLY BY MARIADB.
+
+mariadb_packages:
+  - mariadb
+  - mariadb-server
+  - mysql-connector-java
+  - MySQL-python
+
+mariadb_connector_path: /usr/share/java
+mariadb_connector: mysql-connector-java.jar
+
+### postgresql
+
+postgresql_packages:
+  - postgresql
+  - postgresql-server
+  - postgresql-jdbc
+  - python-psycopg2
+
+postgresql_connector_path: /usr/share/java
+postgresql_connector: postgresql-jdbc.jar

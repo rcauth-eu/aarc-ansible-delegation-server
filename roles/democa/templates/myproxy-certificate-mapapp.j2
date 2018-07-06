@@ -1,0 +1,10 @@
+#!/bin/sh
+username=$1
+if [ -z "$username" ]; then
+    # no username given
+    echo "No username given" >&2
+    exit 1
+fi
+# DN must match the signing policy for your CA.
+echo "/O={{ democa_o }}/OU={{ democa_ou }}${username/ email=*}"
+exit 0

@@ -1,0 +1,31 @@
+---
+
+# IGTF 
+
+#- name: adding IGTF GPG key
+#  rpm_key:
+#    key: "{{ igtfkey }}"
+#    state: present
+#
+#- name: adding IGTF repository (current-new)
+#  template:
+#    src: eugridpma.repo.j2
+#    dest: /etc/yum.repos.d/eugridpma.repo
+#    owner: "root"
+#    group: "root"
+#    mode: 0644
+
+# Shibboleth 
+
+- name: adding Shibboleth GPG key
+  rpm_key:
+    key: "{{ shibboleth_gpgkey }}"
+    state: present
+
+- name: adding Shibboleth repository
+  template:
+    src: security_shibboleth.repo.j2
+    dest: /etc/yum.repos.d/security_shibboleth.repo
+    owner: "root"
+    group: "root"
+    mode: 0644

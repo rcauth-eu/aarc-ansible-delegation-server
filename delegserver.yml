@@ -1,0 +1,13 @@
+---
+- hosts: delegserver
+  remote_user: root
+  vars_files:
+    - common_env.yml
+    - delegserver_env.yml
+    #  include the results of password_generator.yml
+    - secrets_env.yml
+  roles:
+    - common
+    #  note: basic role is already run in cafrontend playbook
+    - delegserver
+  tasks:

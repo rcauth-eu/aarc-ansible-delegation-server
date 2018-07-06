@@ -1,0 +1,98 @@
+---
+########################################################################
+### DEFAULT VALUES FOR THE delegserver ROLE
+########################################################################
+
+### Apache hostcert and key
+
+hostcert: /etc/grid-security/hostcert.pem
+hostkey: /etc/grid-security/hostkey.pem
+
+### CA certificates for the (Apache) hostcert/key, also used when getting
+### the Shibboleth assertion. You must override this depending on the CA.
+
+x509_cert_dir: /etc/grid-security/certificates
+#hostcert_ca_rpm: ca_TERENA-eScience-SSL-CA-3
+#hostcert_ca_tarball: internalca.tar.gz
+
+### define following when the hostcert is signed by an intermediate CA
+#hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
+
+### webserver configuration
+#webroot_redirect: "https://ca-pilot.aai.egi.eu/"
+
+### Email address used to address warnings about the status of the backend CA
+
+contact: "root@localhost"
+
+### Backup Server configuration: defines hosts allowed to rsync from DS
+
+#rsync_hosts: 192.168.2.0/32
+#rsync_path: /
+
+
+### Shibboleth settings: you MUST override (most) of these
+
+shib_entity_id: "https://{{ inventory_hostname }}"
+shib_idp_id: "https://ipd.example.com/idp/shibboleth"
+shib_idp_metadata: "https://ipd.example.com/idp/shibboleth/metadata"
+
+shib_meta_name: "Delegation Service" 
+shib_meta_desc: "Delegation Service Description"
+shib_meta_url: "https://wiki.organization.com"
+shib_meta_org: "Organization"
+shib_meta_org_link: "http://www.organization.com"
+
+shib_meta_admin_company: "Organization"
+shib_meta_admin_name: "Operator"
+shib_meta_admin_mail: "johndoe@organization.com"
+
+shib_meta_contact_company: "Organization"
+shib_meta_contact_name: "Operator"
+shib_meta_contact_mail: "johndoe@organization.com"
+
+shib_meta_sec_contact_company: "Organization"
+shib_meta_sec_contact_name: "CSIRT"
+shib_meta_sec_contact_mail: "security@organization.com"
+shib_meta_sec_contact_phone: ""
+
+shib_meta_tech_name: "Operator"
+shib_meta_tech_mail: "johndoe@organization.com"
+
+
+### DS general settings
+
+### Define default backend storage, only fileStore and mysql are supported
+oa4mp_server_db_conf: mysql
+#oa4mp_server_db_conf: fileStore
+#oa4mp_server_db_conf: mariadb
+#oa4mp_server_db_conf: postgresql
+
+### Other DS server settings, defaults should be fine
+oa4mp_server: oauth2
+oa4mp_remote_user: REMOTE_USER
+
+oa4mp_server_db: oa2server
+oa4mp_server_db_user: oa4mp
+
+oa4mp_server_dir: /var/www/server
+oa4mp_server_conf_dir: "{{ oa4mp_server_dir }}/conf"
+oa4mp_server_conf_file: "{{ oa4mp_server_conf_dir }}/cfg.xml"
+oa4mp_server_keystore: "{{ oa4mp_server_conf_dir }}/private-hostcred.p12"
+oa4mp_server_log_dir: "{{ oa4mp_server_dir }}/log"
+oa4mp_server_storage_dir: "{{ oa4mp_server_dir }}/storage"
+oa4mp_server_tools_dir: "{{ oa4mp_server_dir }}/tools"
+oa4mp_server_certificates_dir: "{{ oa4mp_server_dir }}/certificates"
+
+### DS signing keys
+oa4mp_server_jwk_file: "{{ oa4mp_server_conf_dir }}/ds.jwk"
+
+### Email settings for notifications about new client approval requests.
+### See http://grid.ncsa.illinois.edu/myproxy/oauth/server/configuration/server-email.xhtml
+mail_server: "localhost"
+mail_recipients: "root@localhost"
+mail_enabled: "true"
+mail_use_SSL: "false"
+mail_debug: "true"
+mail_message_template: "{{ oa4mp_server_conf_dir }}/mail_message.template"
+mail_subject_template: "{{ oa4mp_server_conf_dir }}/mail_subject.template"

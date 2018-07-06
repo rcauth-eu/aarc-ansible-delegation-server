@@ -1,0 +1,32 @@
+---
+########################################################################
+### OVERRIDDEN VALUES FOR THE common ROLE
+########################################################################
+
+### Private and public DS interfaces
+### For a *co-hosted* demoCA you want to set the latter 2 to lo
+public_ds_interface: eth0
+private_ds_interface: lo
+private_ca_interface: lo
+
+### Private network between frontend and backend CA
+### For a *co-hosted* demoCA you want to set these to 127.0.0.1(/32)
+private_network: 127.0.0.1/32
+private_ds_address: 127.0.0.1
+private_ca_address: 127.0.0.1
+
+
+### NTP Server
+ntp_servers: 
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+
+
+### SSH Authorized users taken from LDAP
+#authorized_uids:
+#  - johndoe
+
+
+### CA BaseDN in LDAP format, set to the correct value corresponding with the CA
+### Only used by delegserver, easier to set here since we know whether we use a demo CA
+ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"

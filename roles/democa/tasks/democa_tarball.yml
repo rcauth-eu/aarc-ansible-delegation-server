@@ -1,0 +1,73 @@
+---
+
+- name: get demoCA hash
+  shell: "openssl x509 -hash -noout -in {{ democa_dir }}/cacert.pem"
+  register: ca_hash
+
+- name: create tempdir
+  tempfile:
+    state: directory
+    prefix: democa_tarball.
+  register: democa_tmp
+
+- name: copy demoCA's cacert to tmpdir
+  copy:
+    src: "{{ democa_dir }}/cacert.pem"
+    dest: "{{ democa_tmp.path }}/{{ democa_name }}.pem"
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: create symlink for demoCA's pem
+  file:
+    src: "{{ democa_name }}.pem"
+    dest: "{{ democa_tmp.path }}/{{ ca_hash.stdout }}.0"
+    state: link
+
+- name: copy demoCA's signing_policy
+  copy:
+    src: "{{ democa_dir }}/signing-policy"
+    dest: "{{ democa_tmp.path }}/{{ democa_name }}.signing_policy"
+    owner: root
+    group: root
+    remote_src: yes
+  
+- name: create symlink for demoCA's signing policy
+  file:
+    src: "{{ democa_name }}.signing_policy"
+    dest: "{{ democa_tmp.path }}/{{ ca_hash.stdout }}.signing_policy"
+    state: link
+
+- name: copy demoCA's CRL to tmpdir
+  copy:
+    src: "{{ democa_dir }}/crl.pem"
+    dest: "{{ democa_tmp.path }}/{{ ca_hash.stdout }}.r0"
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: create demoCA tarball
+  shell:
+    tar -zcf "{{ democa_dir }}/{{ democa_tarball }}" *
+  args:
+    chdir: "{{ democa_tmp.path }}"
+
+- name: remove tempdir
+  file:
+    path: "{{ democa_tmp.path }}"
+    state: absent
+
+- name: copy demoCA's tarball
+  copy:
+    src: "{{ democa_dir }}/{{ democa_tarball }}"
+    dest: "/root/{{ democa_tarball }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0600
+  when: private_ds_address == private_ca_address
+
+- name: copy demoCA's tarball to frontend
+  command:
+    scp -p "{{ democa_dir }}/{{ democa_tarball }}" "{{ private_ds_fqdn }}:/root"
+  when: not private_ds_address == private_ca_address

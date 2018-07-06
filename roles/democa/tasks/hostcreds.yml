@@ -1,0 +1,34 @@
+---
+
+# Note: make sure to run this task after the myproxy task, since we need the
+# myproxy user (which comes from the myproxy_packages)
+
+- name: create credentials directory
+  file:
+    path: "{{ democa_creddir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+# Install hostcert and key from output of canet script
+- name: unpack host credentials
+  unarchive:
+    src: "{{ canet_dir }}/{{ private_ca_fqdn }}.tgz"
+    remote_src: yes
+    dest: "{{ democa_creddir }}"
+  notify: restart myproxy
+
+- name: set mode for hostcert
+  file:
+    path: "{{ democa_hostcert }}"
+    owner: myproxy
+    group: myproxy
+    mode: 0644
+
+- name: set mode for hostkey
+  file:
+    path: "{{ democa_hostkey }}"
+    owner: myproxy
+    group: myproxy
+    mode: 0400

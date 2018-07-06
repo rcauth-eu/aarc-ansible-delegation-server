@@ -1,0 +1,12 @@
+---
+
+# Nikhef Local
+
+- name: adding Nikhef Local repository
+  template:
+    src: nikhef-local-packages.repo.j2
+    dest: /etc/yum.repos.d/nikhef-local-packages.repo
+    owner: "root"
+    group: "root"
+    mode: 0644
+

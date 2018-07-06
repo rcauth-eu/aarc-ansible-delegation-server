@@ -1,0 +1,65 @@
+LoadModule ssl_module modules/mod_ssl.so
+Listen 443
+
+SSLPassPhraseDialog  builtin
+SSLSessionCache         shmcb:/var/cache/mod_ssl/scache(512000)
+SSLSessionCacheTimeout  300
+
+SSLRandomSeed startup file:/dev/urandom  256
+SSLRandomSeed connect builtin
+
+SSLCryptoDevice builtin
+
+<VirtualHost _default_:443>
+
+    ServerName {{ inventory_hostname }}
+
+{% if server_aliases is defined %}
+{% for server_alias in server_aliases %}
+    ServerAlias {{ server_alias }}
+{% endfor %}
+{% endif %}
+
+    ErrorLog logs/ssl_error_log
+    TransferLog logs/ssl_access_log
+    LogLevel warn
+
+    RewriteEngine On
+#    LogLevel alert rewrite:trace8
+    # match idphint value, exclude colon since mod_rewrite otherwise gets
+    # confused (newer mod_rewrite can use ; as separator)
+    RewriteCond %{QUERY_STRING}     (^|&)idphint=([^:&]+)    [NC]
+    # idphint cookie for domain rcauth.eu, expires 1 min., path /, https only
+    RewriteRule /oauth2/authorize "-"      [CO=idphint:%2:.rcauth.eu:1:/:secure:httponly]
+
+    ProxyPass /{{ oa4mp_server }}/authorized !
+    ProxyPass /{{ oa4mp_server }} ajp://127.0.0.1:8009/{{ oa4mp_server }}
+
+    ProxyRequests Off
+    UseCanonicalPhysicalPort On
+    UseCanonicalName On
+
+    SSLEngine on
+    SSLProtocol all -SSLv2 -SSLv3 +TLSv1 
+    SSLHonorCipherOrder On
+    SSLCipherSuite "EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH EDH+aRSA !aNULL !eNULL !MEDIUM !LOW !3DES !MD5 !EXP !PSK !SRP !DSS"
+    SSLCertificateFile {{ hostcert }}
+    SSLCertificateKeyFile {{ hostkey }}
+{% if hostcert_intermediate is defined %}
+    # Note: from Apache 2.4.8 SSLCertificateChainFile is obsolete. Probably can
+    # better use SSLCACertificatePath in that case.
+    SSLCertificateChainFile {{ hostcert_intermediate }}
+{% endif %}
+
+    Header always set Strict-Transport-Security "max-age=15724800"
+
+    CustomLog logs/ssl_request_log "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+
+{% if webroot_redirect is defined %}
+    Redirect permanent /index.html {{ webroot_redirect }}
+    Redirect 301 /index.html {{ webroot_redirect }}
+{% endif %}
+
+</VirtualHost>
+
+

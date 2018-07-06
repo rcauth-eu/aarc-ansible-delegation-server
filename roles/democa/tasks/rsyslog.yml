@@ -1,0 +1,28 @@
+---
+
+- name: add myproxy log config for rsyslog
+  template:
+    src: rsyslog-myproxy.conf.j2
+    dest: /etc/rsyslog.d/myproxy.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart rsyslog
+
+- name: add logrotate for myproxy logs
+  lineinfile:
+    dest: /etc/logrotate.d/syslog
+    insertafter: '^/var/log/spooler'
+    regexp: '^/var/log/myproxy/myproxy-server.log'
+    line: '/var/log/myproxy/myproxy-server.log'
+    backup: yes
+  notify: restart rsyslog
+
+- name: copy rsync_backup logrotate
+  template:
+    src: rsync_backup.j2
+    dest: /etc/logrotate.d/rsync_backup
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart rsyslog

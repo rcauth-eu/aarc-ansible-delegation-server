@@ -1,0 +1,75 @@
+---
+
+# Install MariaDB Server
+
+- name: install MariaDB
+  yum: name={{ item }} state=present
+  with_items: "{{ mariadb_packages }}"
+  register: mariadb_installation
+
+- name: make a link to the connector
+  file:
+    src: "{{ mariadb_connector_path }}/{{ mariadb_connector }}"
+    dest: "{{ catalina_home }}/lib/{{ mariadb_connector }}"
+    owner: root
+    group: root
+    state: link
+
+# Start MariaDB Server
+
+- name: start the MariaDB service
+  service: name=mariadb state=started enabled=yes
+
+# Configure root password (but only on fresh installations)
+
+- name: update mariadb root password for all root accounts
+  mysql_user: name=root host={{ item }} password={{ mariadb_root_password }} priv=*.*:ALL,GRANT
+  with_items:
+    - 127.0.0.1
+    - localhost
+  when: mariadb_installation.changed
+
+# check OA4MP Server DB
+
+- name: create OA4MP Server DB
+  mysql_db: 
+    name: "{{ oa4mp_server_db }}" 
+    state: present
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+  register: server_db
+  when: mariadb_root_password is defined 
+
+- name: update mariadb oa4mp user account
+  mysql_user:
+    name: "{{ oa4mp_server_db_user }}"
+    host: "{{ item }}"
+    password: "{{ oa4mp_server_db_pw }}"
+    priv: "{{ oa4mp_server_db }}.*:ALL"
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+  with_items:
+    - 127.0.0.1
+    - localhost
+  when: mariadb_root_password is defined
+
+- name: copy oa4mp server sql script
+  template: 
+    src: oa4mp-server-mysql.sql.j2
+    dest: /tmp/oa4mp-server-mysql.sql
+  when: server_db is defined and server_db.changed
+
+- name: execute oa4mp server sql script
+  mysql_db: 
+    state: import
+    name: all 
+    target: /tmp/oa4mp-server-mysql.sql
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+  when: server_db is defined and server_db.changed
+
+- name: remove oa4mp server sql script
+  file: 
+    path: /tmp/oa4mp-server-mysql.sql
+    state: absent
+  when: server_db is defined and server_db.changed

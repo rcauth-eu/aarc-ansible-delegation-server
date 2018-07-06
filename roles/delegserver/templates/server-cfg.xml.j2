@@ -1,0 +1,142 @@
+<config>
+
+    <service name="default" alias="server-config"/>
+
+    <!-- ############################################################################## -->
+
+    <service name="server-config" address="https://{{ inventory_hostname }}/{{ oa4mp_server }}" debug="true">
+
+       <!-- Regular Logs -->
+       <logging  logFileName="{{ oa4mp_server_log_dir }}/{{ oa4mp_server }}.log"
+                 logName="oauth2"
+                 logSize="10000000"
+                 logFileCount="10"
+                 debug="true"
+       />
+
+       <!-- Trace Logs -->
+       <traceLogging  logFileName="{{ oa4mp_server_log_dir }}/trace.log"
+                 logName="trace"
+                 logSize="10000000"
+                 logFileCount="10"
+                 debug="true"
+       />
+
+       <!-- mail setup for new client approval requests -->
+       <mail enabled="{{ mail_enabled }}"
+             debug="{{ mail_debug }}"
+             recipients="{{ mail_recipients }}"
+             server="{{ mail_server }}"
+	     useSSL="{{ mail_use_SSL }}">
+         <messageTemplate>{{ mail_message_template }}</messageTemplate>
+         <subjectTemplate>{{ mail_subject_template }}</subjectTemplate>
+       </mail>
+
+       <!-- JSON Web key for signing -->
+       <JSONWebKey defaultKeyID="{{ oa4mp_server_jwk_key_id }}">
+         <path>{{ oa4mp_server_jwk_file }}</path>
+       </JSONWebKey>
+
+       <!-- Claim mappings -->
+       <scopes handler="org.delegserver.oauth2.DSDynamicScopeHandler">
+         <scope name="edu.uiuc.ncsa.myproxy.getcert">
+                <claim name="cert_subject_dn">X509_CERT_SUBJECT</claim>
+         </scope> 
+         <scope name="email">
+                <claim name="email">mail</claim>
+         </scope>
+         <scope name="openid">
+                <!-- 
+                     The 'sub' claim is always sent and it defaults to whatever the 
+                     authorizationServlet returns as a username 
+                -->
+                <!-- <claim name="sub">REMOTE_USER</claim> -->
+         </scope>
+         <scope name="profile">
+                <claim name="given_name">givenName</claim>
+                <claim name="family_name">sn</claim>
+         </scope>
+         <scope name="org.cilogon.userinfo">
+                <claim name="idp">Shib-Identity-Provider</claim>
+                <claim name="idp_display_name">Meta-orgDisplayName</claim>
+                <claim name="eduPersonTargetedID">eptid</claim>
+                <claim name="eduPersonPrincipalName">eppn</claim>
+                <claim name="eduPersonUniqueId">epuid</claim>
+                <claim name="eduPersonScopedAffiliation">affiliation</claim>
+                <claim name="name">displayName</claim>
+         </scope>
+       </scopes>
+
+       <!-- DN generator sources -->
+       <!-- <dnGenerator attributeName="X509_CERT_SUBJECT" type="rfc2253" baseDN="DC=rcauth-clients,DC=rcauth,DC=eu"> -->
+       <!-- <dnGenerator attributeName="X509_CERT_SUBJECT" type="rfc2253" baseDN="DC=Example,DC=NL"> -->
+       <dnGenerator attributeName="X509_CERT_SUBJECT" type="rfc2253" baseDN="{{ ca_baseDN }}">
+         <cnName>
+                <source>displayName</source>
+                <source>givenName+sn</source>
+                <source>cn</source>
+         </cnName>
+         <cnUniqueId>
+                <source>epuid</source>
+                <source>eppn</source>
+                <source>eptid</source>
+         </cnUniqueId>
+         <organisation>
+                <source>schacHomeOrganization</source>
+                <source filter="url">o</source>
+                <source>Meta-orgDisplayName</source>
+                <source filter="url">Shib-Identity-Provider</source>
+         </organisation>
+         <extensions>
+                <source name="email">mail</source>
+         </extensions>
+       </dnGenerator>
+
+       <attributeFilters>
+                <filter name="url">org.delegserver.oauth2.shib.filters.URLDomainNameFilter</filter>
+		<filter name="shout">org.delegserver.oauth2.shib.filters.ShoutFilter</filter>
+		<filter name="leetify">org.delegserver.oauth2.shib.filters.LeetifyFilter</filter>
+		<filter name="missepll">org.delegserver.oauth2.shib.filters.MissepllFilter</filter>
+       </attributeFilters>
+
+
+{% if oa4mp_server_db_conf == "fileStore" %}
+
+       <{{ oa4mp_server_db_conf }} path="{{ oa4mp_server_storage_dir }}">
+                         <transactions/>
+                         <clients/>
+                         <clientApprovals/>
+                         <traceRecords/>
+       </{{ oa4mp_server_db_conf }}>
+
+{% else %}
+
+       <{{ oa4mp_server_db_conf }}    username="{{ oa4mp_server_db_user }}" 
+                   password="{{ oa4mp_server_db_pw }}" 
+                   database="{{ oa4mp_server_db }}" 
+                   schema="{{ oa4mp_server_db }}" >
+                         <transactions/>
+                         <clients/>
+                         <clientApprovals/>
+			 <traceRecords/>
+       </{{ oa4mp_server_db_conf }}>
+
+{% endif %}
+
+       <!-- Note: if the CA is using a cert with it's FQDN,
+            we don't need to set serverDN, but it doesn't harm much either -->
+       <myproxy host="{{ private_ca_fqdn }}"
+                port="{{ private_ca_port }}"
+		serverDN="CN={{ private_ca_fqdn }},{{ private_ca_basedn }}">
+                 <keystore path="{{ oa4mp_server_keystore }}"
+                           type="pkcs12"
+                           password="{{ oa4mp_server_keystore_pw }}"
+                           factory="SunX509" />
+       </myproxy>
+
+       <authorizationServlet useHeader="true" requireHeader="true" headerFieldName="{{ oa4mp_remote_user }}" />
+
+    </service>
+
+</config>
+

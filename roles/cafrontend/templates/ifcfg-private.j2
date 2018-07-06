@@ -1,0 +1,10 @@
+# Configured using Ansible
+NAME={{ private_ds_interface }}
+DEVICE={{ private_ds_interface }}
+BOOTPROTO=static
+ONBOOT=yes
+{{ private_network_netmask.stdout }}
+IPADDR={{ private_ds_address }}
+IPV6INIT=no
+IPV6_AUTOCONF=no
+NM_CONTROLLED=no

@@ -1,0 +1,12 @@
+---
+
+enabled_services:
+ - myproxy-server
+ - postfix
+
+extra_packages:
+ - myproxy-server
+ - myproxy-admin
+ - myproxy-doc
+ - globus-simple-ca
+

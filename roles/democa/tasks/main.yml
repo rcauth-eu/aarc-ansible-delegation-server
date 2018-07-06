@@ -1,0 +1,26 @@
+---
+
+# basic configuration
+
+- include: hosts.yml
+- include: nameserver.yml
+- include: yum_squid.yml
+
+# include tasks to execute
+
+- include: postfix.yml
+- include: rsyslog.yml
+
+- include: canet_ca.yml
+- include: rsync_sshkey.yml
+- include: backup.yml
+
+- include: myproxy.yml
+- include: hostcreds.yml
+- include: democa_tarball.yml
+
+# list of enabled services
+
+- name: enable services
+  service: name={{ item }} state=started enabled=yes
+  with_items: "{{ enabled_services }}"

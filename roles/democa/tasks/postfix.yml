@@ -1,0 +1,19 @@
+---
+
+# Postfix Setup
+
+- name: configure postfix relaying
+  lineinfile:
+     dest: "/etc/postfix/main.cf"
+     regexp: '^relayhost\s+=.*$'
+     line: "relayhost = [{{ private_ds_fqdn }}]"
+     owner: root
+     group: root
+     mode: 0644
+     backup: yes
+  register: postix_config
+  when: not private_ds_address == private_ca_address
+
+- name: restart posfix
+  service: name=postfix state=restarted enabled=yes
+  when: postix_config.changed

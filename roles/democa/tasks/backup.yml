@@ -1,0 +1,18 @@
+---
+
+- name: copy backup.sh
+  template:
+    src: backup.sh.j2
+    dest: /usr/local/sbin/backup.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create cronjob
+  template:
+    src: zz-backup.j2
+    dest: /etc/cron.daily/zz-backup
+    owner: root
+    group: root
+    mode: 0755
+

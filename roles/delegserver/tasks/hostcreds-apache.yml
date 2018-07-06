@@ -1,0 +1,46 @@
+---
+
+- name: "make sure {{ x509_cert_dir }} exists"
+  file:
+    path: "{{ x509_cert_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: copy hostcert
+  copy:
+    src: "{{ inventory_hostname }}.crt"
+    dest: "{{ hostcert }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart httpd
+
+- name: copy hostkey
+  copy:
+    src: "{{ inventory_hostname }}.key"
+    dest: "{{ hostkey }}"
+    owner: root
+    group: root
+    mode: 0400
+  notify: restart httpd
+
+# INSTALLING (INTERMEDIATE) TRUST ANCHOR OF HOST CERTIFICATE. NOTE WE NEED A
+# (ROOT) CA CERT ALSO FOR GETTING THE SHIB ASSERTION
+
+- name: deploy CA for hostcred from rpm
+  yum:
+    name: "{{ hostcert_ca_rpm }}"
+    state: present
+  when: hostcert_ca_rpm is defined
+
+- name: deploy CA for hostcred from tarball
+  unarchive:
+    src: "{{ hostcert_ca_tarball }}"
+    copy: yes
+    dest: "{{ x509_cert_dir }}"
+    mode: 0644
+    owner: root
+    group: root
+  when: hostcert_ca_tarball is defined

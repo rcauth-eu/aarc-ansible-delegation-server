@@ -1,0 +1,18 @@
+---
+
+- name: get interface scripts
+#  shell: "ls /sys/class/net/ | grep -v 'lo'"
+  shell: "ls /etc/sysconfig/network-scripts/ifcfg-* | grep -v 'ifcfg-lo'"
+  register: interfacescripts
+  changed_when: false
+
+- name: "disable network manager in {{ item }}"
+  lineinfile:
+    dest: "{{ item }}"
+    regexp: "^NM_CONTROLLED=.*"
+    line: "NM_CONTROLLED=no"
+  notify: restart network
+  with_items: "{{ interfacescripts.stdout_lines }}" 
+
+# flush handlers in order to restart network as soon as ifcfg changes 
+- meta: flush_handlers

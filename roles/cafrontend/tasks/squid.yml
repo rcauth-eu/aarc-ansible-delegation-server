@@ -1,0 +1,17 @@
+---
+
+# Setup a squid proxy for the backend CA
+
+- name: add squid config
+  template:
+    src: squid.conf.j2
+    dest: "/etc/squid/squid.conf"
+    owner: "root"
+    group: "root"
+    mode: 0644
+    backup: yes
+  register: squid_config
+
+- name: restart squid
+  service: name=squid state=restarted enabled=yes
+  when: squid_config.changed

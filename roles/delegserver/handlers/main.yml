@@ -1,0 +1,16 @@
+---
+
+- name: restart tomcat
+  service:
+    name: "{{ tomcat_service }}"
+    state: restarted
+
+- name: restart httpd
+  service:
+    name: "{{ httpd_service }}"
+    state: restarted
+
+- name: restart shibd
+  service:
+    name: "{{ shib_service }}"
+    state: restarted

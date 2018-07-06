@@ -1,0 +1,104 @@
+---
+
+# Disable SELinux (Shibboleth SP requirement)
+
+- name: disable selinux 
+  selinux: state=disabled
+
+# install shibboleth
+
+- name: install shibboleth SP
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ shib_packages }}"
+
+# configure shibboleth SP
+
+- name: add attribute map
+  template:
+    src: attribute-map.xml.j2
+    dest: "{{ shib_attr_map_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+    backup: yes
+  notify: 
+    - restart shibd
+    - restart httpd
+
+- name: add attribute policy
+  template:
+    src: attribute-policy.xml.j2
+    dest: "{{ shib_attr_policy_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+    backup: yes
+  notify: 
+    - restart shibd
+    - restart httpd
+
+- name: add shibboleth2.xml
+  template:
+    src: shibboleth2.xml.j2
+    dest: "{{ shib_conf_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+    backup: yes
+  notify: 
+    - restart shibd
+    - restart httpd
+
+- name: update shibd_log.maxFileSize to 10MB
+  lineinfile:
+     dest: /etc/shibboleth/shibd.logger
+     regexp: '^log4j.appender.shibd_log.maxFileSize=.*'
+     line: 'log4j.appender.shibd_log.maxFileSize=10000000'
+     owner: root
+     group: root
+     mode: 0644
+     backup: yes
+  notify: 
+    - restart shibd
+    - restart httpd
+
+- name: register protected resource /authorize in httpd
+  blockinfile:
+     dest: "{{ shib_httpd_conf }}"
+     marker: "# {mark} ANSIBLE MANAGED BLOCK /authorize"
+     owner: "root"
+     group: "root"
+     mode: 0644
+     block: |
+       <Location /{{oa4mp_server}}/authorize>
+         AuthType shibboleth
+         ShibRequestSetting requireSession 1
+         ShibRequestSetting exportAssertion true
+         ShibUseHeaders On
+         <RequireAll>
+       #    Require not user jdoe@example.org
+           Require valid-user
+         </RequireAll>
+       </Location>
+  notify: restart httpd
+
+- name: register protected resource /register in httpd
+  blockinfile:
+     dest: "{{ shib_httpd_conf }}"
+     marker: "# {mark} ANSIBLE MANAGED BLOCK /register"
+     owner: "root"
+     group: "root"
+     mode: 0644
+     block: |
+       <Location /{{oa4mp_server}}/register>
+         AuthType shibboleth
+         ShibRequestSetting requireSession 1
+         ShibUseHeaders On
+         <RequireAll>
+       #    Require not user jdoe@example.org
+           Require valid-user
+         </RequireAll>
+       </Location>
+  notify: restart httpd

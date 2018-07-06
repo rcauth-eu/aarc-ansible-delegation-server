@@ -1,0 +1,28 @@
+---
+
+# Setup dnsmasq server
+
+- name: define hosts in the private network
+  blockinfile:
+     dest: "/etc/hosts"
+     marker: "# {mark} CA PRIVATE NETWORK"
+     owner: "root"
+     group: "root"
+     mode: 0644
+     insertafter: EOF
+     block: |
+       {{ private_ca_address }}    {{ private_ca_fqdn }}  {{ private_ca_hostname }}
+       {{ private_ds_address }}    {{ private_ds_fqdn }}  {{ private_ds_hostname }}
+
+- name: add dnsmasq config
+  template:
+    src: canet.j2
+    dest: "/etc/dnsmasq.d/{{ private_domain }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  register: dnsmasq_config
+
+- name: restart dnsmasq
+  service: name=dnsmasq state=restarted enabled=yes
+  when: dnsmasq_config.changed

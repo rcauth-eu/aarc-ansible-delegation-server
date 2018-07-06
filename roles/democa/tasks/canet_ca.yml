@@ -1,0 +1,40 @@
+---
+
+- name: copy canet_certificates.sh script
+  template:
+    src: canet_certificates.sh.j2
+    dest: /usr/local/sbin/canet_certificates.sh
+    owner: root
+    group: root
+    mode: 0700
+    backup: yes
+
+# Create the private CA for communication between delegation server and myproxy
+- name: execute canet_certificates.sh script
+  shell: "/usr/local/sbin/canet_certificates.sh {{ private_ca_fqdn }} {{ private_ds_fqdn }}"
+
+# First make sure the output is right ownership in either case
+- name: change permissions and ownership of "{{ private_ds_fqdn }}.tgz"
+  file:
+    path: "{{ canet_dir }}/{{ private_ds_fqdn }}.tgz"
+    owner: root
+    group: root
+    mode: 0600
+
+# Copy frontend credentials directly when co-hosted
+- name: copy frontend credentials tarball
+  copy:
+    src: "{{ canet_dir }}/{{ private_ds_fqdn }}.tgz"
+    dest: "{{ private_dscreds_tarball }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0600
+  when: private_ds_address == private_ca_address
+
+# Copy remotely frontend credentials when not co-hosted.
+# Note: we disable StrictHostKeyChecking this first time
+- name: copy frontend credentials to the delegation server
+  command:
+    scp -o StrictHostKeyChecking=no -p "{{ canet_dir }}/{{ private_ds_fqdn }}.tgz" "{{ private_ds_fqdn }}:{{ private_dscreds_tarball }}"
+  when: not private_ds_address == private_ca_address

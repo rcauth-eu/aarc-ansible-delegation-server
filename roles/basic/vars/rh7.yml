@@ -1,0 +1,42 @@
+---
+# general packages that should be present
+
+general_packages: 
+  - libselinux-python
+  - net-tools
+  - bind-utils
+  - mailx
+  - sysstat
+#  - smartmontools
+#  - ipmitool
+  - ntp
+  - iptables-services
+  - patch
+  - xinetd
+  - nscd
+  - authconfig
+
+#nikhef_packages:
+#  - mkgroup-sshlpk
+
+# list of enabled and disabled services 
+
+enabled_services:
+  - ntpd
+  - iptables
+#  - ip6tables
+
+disabled_services:
+  - NetworkManager
+  - wpa_supplicant
+  - firewalld
+#  - avahi-daemon
+
+# additional repository information
+
+epelrpm: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+epelkey: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7"
+
+#nikhef_local_repo: nikhef-local-packages
+#nikhef_local_baseurl: "https://www.nikhef.nl/grid/ndpf/files/local/packages"
+

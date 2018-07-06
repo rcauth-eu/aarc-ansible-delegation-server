@@ -1,0 +1,19 @@
+---
+
+# This task has a counterpart in the delegserver role where passwords are disabled
+# for the backend. Here they are enabled to enable the CA to copy input.
+# Note that the basic role sets the overall policy to disabled.
+
+# Add specific block for password-based logins from the CA
+- name: enable ssh password logins for backend
+  blockinfile:
+    dest: /etc/ssh/sshd_config
+    marker: "# {mark} backend CA password policy"
+    insertafter: EOF
+    backup: yes
+    block: |
+        Match address {{ private_ca_address }}/32
+           # Enable pw authN here when updating the ssh keys
+           PasswordAuthentication yes
+  notify: restart sshd
+  when: not private_ca_address == private_ds_address

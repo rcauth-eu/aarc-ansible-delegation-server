@@ -1,0 +1,39 @@
+---
+
+# Create account for backup user
+
+- name: create backup user
+  user:
+    name: "{{ ca_backup_user }}"
+    password: '*'
+    shell: /bin/bash
+    home: "{{ ca_backup_home }}"
+    create_home: no
+    system: yes
+
+- name: create backup user's .ssh directory
+  file:
+    path: "{{ ca_backup_home }}/.ssh"
+    state: directory
+    owner: "{{ ca_backup_user }}"
+    group: "{{ ca_backup_user }}"
+    mode: 0700
+
+- name: copy ssh pubkey to authorized_keys file
+  copy:
+    src: "{{ ca_backup_pubkey_input }}"
+    dest: "{{ ca_backup_home }}/.ssh/authorized_keys"
+    remote_src: yes
+    owner: "{{ ca_backup_user }}"
+    group: "{{ ca_backup_user }}"
+    mode: 0600
+
+# Allow ssh access for backup user
+
+- name: enable ssh access for backup user
+  lineinfile:
+    dest: "/etc/security/access.conf"
+    insertafter: '^\+ : root : ALL'
+    regexp: "^.*: {{ ca_backup_user }} :"
+    line: "+ : {{ ca_backup_user }} : {{ private_ca_address }}"
+    backup: yes

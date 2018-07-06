@@ -1,0 +1,12 @@
+---
+
+# YUM needs to make use of the squid proxy, can only run this task safely after
+# we're done installing packages or when the private_ds_fqdn is already setup
+
+- name: set squid proxy for yum
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: '^proxy='
+    line: "proxy=http://{{ private_ds_fqdn }}:3128/"
+    backup: yes
+  when: not private_ds_address == private_ca_address

@@ -1,0 +1,120 @@
+---
+
+# make sure directory structure is in place
+
+- name: server directory exists
+  file: 
+    path: "{{ oa4mp_server_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+
+- name: server conf dir exists
+  file: 
+    path: "{{ oa4mp_server_conf_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+
+
+- name: server log exists
+  file: 
+    path: "{{ oa4mp_server_log_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+
+- name: server storage exists
+  file:
+    path: "{{ oa4mp_server_storage_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+
+- name: server tools exists
+  file:
+    path: "{{ oa4mp_server_tools_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+
+# place configuration
+
+- name: server config file
+  template:
+    src: server-cfg.xml.j2
+    dest: "{{ oa4mp_server_conf_file }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0600
+    backup: yes
+
+# copy mail templates
+
+- name: mail message template file
+  template:
+    src: mail_message.template.j2
+    dest: "{{ mail_message_template }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0600
+    backup: yes
+
+- name: mail subject template file
+  template:
+    src: mail_subject.template.j2
+    dest: "{{ mail_subject_template }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0600
+    backup: yes
+
+# copy tools for client approval
+
+- name: copy client approval jar
+  copy:
+    src: oa2-cli.jar
+    dest: "{{ oa4mp_server_tools_dir }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0644
+
+- name: copy client approval jar
+  template:
+    src: oa2-cli.j2
+    dest: "{{ oa4mp_server_tools_dir }}/oa2-cli"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0744
+
+- name: copy JSON web keys
+  copy:
+    src: "ds.jwk"
+    dest: "{{ oa4mp_server_jwk_file }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0400
+
+# deploy war file
+
+- name: stop tomcat for the war switch
+  service:
+    name: "{{ tomcat_service }}"
+    state: stopped
+
+- name: delete old deployment
+  file:
+    path: "{{item}}"
+    state: absent
+  with_items:
+    - "{{ catalina_home }}/webapps/{{ oa4mp_server }}"
+    - "{{ catalina_home }}/webapps/{{ oa4mp_server }}.war"
+
+- name: copy war 
+  copy:
+    src: "{{ oa4mp_server }}.war"
+    dest: "{{ catalina_home }}/webapps/{{ oa4mp_server }}.war"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    mode: 0644
+  notify: restart tomcat

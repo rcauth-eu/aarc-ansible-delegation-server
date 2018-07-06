@@ -1,0 +1,9 @@
+/var/log/rsync_backup.log {
+    weekly
+    rotate 13
+    maxage 90
+    notifempty
+    create 0600 root root
+    compress
+    missingok
+}

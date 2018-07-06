@@ -1,0 +1,14 @@
+interface={{ private_ds_interface }}
+domain={{ private_domain }}
+local=/{{ private_domain }}/
+bogus-priv
+# Also resolve non-local names, although we don't need it for yum (handled by
+# squid) we need it for e.g. installing RPM keys directly.
+#no-resolv
+
+mx-target={{ private_ds_hostname }}.{{ private_domain }}
+localmx
+
+#log-dhcp
+#log-queries
+#log-facility=/var/log/dnsmasq.log

@@ -1,0 +1,32 @@
+*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+
+# INPUT Chain
+
+-I INPUT -i lo -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+-A INPUT -m state --state NEW -p tcp --dport 22 -j LOG --log-prefix "SSH ACCEPT: "
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+
+{% if inventory_hostname == groups.delegserver.0 %}
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
+-A INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 22 -j ACCEPT
+
+-A INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 25 -j ACCEPT
+-A INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 3128 -j ACCEPT
+
+-A INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 53 -j ACCEPT
+-A INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 123 -j ACCEPT
+{% endif %}
+
+{% if inventory_hostname == groups.democa.0 %}
+-A INPUT -m state --state NEW -m tcp -p tcp -s {{ private_ds_address }} --dport {{ private_ca_port }} -j ACCEPT
+{% endif %}
+
+-A INPUT -m limit --limit 2/min -j LOG --log-uid --log-prefix "iptables:INPUT: "
+-A INPUT -j DROP
+
+COMMIT

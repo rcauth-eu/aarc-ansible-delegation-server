@@ -1,0 +1,11 @@
+---
+- hosts: delegserver
+  remote_user: root
+  vars_files:
+    - common_env.yml
+    - cafrontend_env.yml
+  roles:
+    - common
+    - basic
+    - cafrontend
+  tasks:

@@ -1,0 +1,205 @@
+<SPConfig xmlns="urn:mace:shibboleth:2.0:native:sp:config"
+    xmlns:conf="urn:mace:shibboleth:2.0:native:sp:config"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"    
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui"
+    xmlns:mdattr="urn:oasis:names:tc:SAML:metadata:attribute"
+    clockSkew="180">
+
+    <!--
+    By default, in-memory StorageService, ReplayCache, ArtifactMap, and SessionCache
+    are used. See example-shibboleth2.xml for samples of explicitly configuring them.
+    -->
+
+    <!--
+    To customize behavior for specific resources on Apache, and to link vhosts or
+    resources to ApplicationOverride settings below, use web server options/commands.
+    See https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPConfigurationElements for help.
+    
+    For examples with the RequestMap XML syntax instead, see the example-shibboleth2.xml
+    file, and the https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPRequestMapHowTo topic.
+    -->
+
+    <!-- The ApplicationDefaults element is where most of Shibboleth's SAML bits are defined. -->
+    <ApplicationDefaults entityID="{{ shib_entity_id }}"
+                         REMOTE_USER="epuid eppn eptid targeted-id persistent-id"
+			 metadataAttributePrefix="Meta-">
+
+        <!--
+        Controls session lifetimes, address checks, cookie handling, and the protocol handlers.
+        You MUST supply an effectively unique handlerURL value for each of your applications.
+        The value defaults to /Shibboleth.sso, and should be a relative path, with the SP computing
+        a relative value based on the virtual host. Using handlerSSL="true", the default, will force
+        the protocol to be https. You should also set cookieProps to "https" for SSL-only sites.
+        Note that while we default checkAddress to "false", this has a negative impact on the
+        security of your site. Stealing sessions via cookie theft is much easier with this disabled.
+        -->
+        <Sessions lifetime="28800" timeout="3600" relayState="ss:mem"
+                  checkAddress="false" handlerSSL="true" cookieProps="https"
+		  exportLocation="https://localhost/Shibboleth.sso/GetAssertion" exportACL="127.0.0.1 ::1">
+
+            <!--
+            Configures SSO for a default IdP. To allow for >1 IdP, remove
+            entityID property and adjust discoveryURL to point to discovery service.
+            (Set discoveryProtocol to "WAYF" for legacy Shibboleth WAYF support.)
+            You can also override entityID on /Login query string, or in RequestMap/htaccess.
+            -->
+            <SSO entityID="{{ shib_idp_id }}">
+              SAML2
+            </SSO>
+
+            <!-- SAML and local-only logout. -->
+            <Logout>SAML2 Local</Logout>
+            
+            <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
+            <Handler type="MetadataGenerator" Location="/Metadata" signing="false">
+              <mdui:UIInfo>
+                   <mdui:DisplayName xml:lang="en">{{ shib_meta_name }}</mdui:DisplayName>
+                   <mdui:Description xml:lang="en">{{ shib_meta_desc }}</mdui:Description>
+                   <mdui:InformationURL xml:lang="en">{{ shib_meta_url }}</mdui:InformationURL>
+              </mdui:UIInfo>
+
+              <mdattr:EntityAttributes>
+                  <saml:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" Name="http://macedir.org/entity-category">
+                      <saml:AttributeValue>http://refeds.org/category/research-and-scholarship</saml:AttributeValue>
+                  </saml:Attribute>
+                  <saml:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" Name="urn:oasis:names:tc:SAML:attribute:assurance-certification">
+                      <saml:AttributeValue>https://refeds.org/sirtfi</saml:AttributeValue>
+                  </saml:Attribute>
+              </mdattr:EntityAttributes>
+
+              <md:Organization>
+                   <md:OrganizationName xml:lang="en">{{ shib_meta_org }}</md:OrganizationName>
+                   <md:OrganizationDisplayName xml:lang="en">{{ shib_meta_org }}</md:OrganizationDisplayName>
+                   <md:OrganizationURL xml:lang="en">{{ shib_meta_org_link }}</md:OrganizationURL>
+              </md:Organization>
+
+              <md:ContactPerson contactType="administrative">
+                   <md:Company>{{ shib_meta_admin_company }}</md:Company>
+                   <md:GivenName>{{ shib_meta_admin_name }}</md:GivenName>
+                   <md:EmailAddress>mailto:{{ shib_meta_admin_mail }}</md:EmailAddress>
+              </md:ContactPerson>
+              <md:ContactPerson contactType="support">
+                   <md:Company>{{ shib_meta_contact_company }}</md:Company>
+                   <md:GivenName>{{ shib_meta_contact_name }}</md:GivenName>
+                   <md:EmailAddress>mailto:{{ shib_meta_contact_mail }}</md:EmailAddress>
+              </md:ContactPerson>
+              <md:ContactPerson xmlns:remd="http://refeds.org/metadata" contactType="other" remd:contactType="http://refeds.org/metadata/contactType/security">
+                   <md:Company>{{ shib_meta_sec_contact_company }}</md:Company>
+                   <md:GivenName>{{ shib_meta_sec_contact_name }}</md:GivenName>
+                   <md:EmailAddress>mailto:{{ shib_meta_sec_contact_mail }}</md:EmailAddress>
+                   <md:TelephoneNumber>{{ shib_meta_sec_contact_phone }}</md:TelephoneNumber>
+              </md:ContactPerson>
+              <md:ContactPerson contactType="technical">
+                   <md:GivenName>{{ shib_meta_tech_name }}</md:GivenName>
+                   <md:EmailAddress>mailto:{{ shib_meta_tech_mail }}</md:EmailAddress>
+              </md:ContactPerson>
+
+              <md:AttributeConsumingService index="0">
+                   <md:ServiceName xml:lang="en">{{ shib_meta_name }}</md:ServiceName>
+                   <md:ServiceDescription xml:lang="en">{{ shib_meta_desc }}</md:ServiceDescription>
+
+                   <!-- user identifier -->
+                   <md:RequestedAttribute Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.6" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="eduPersonPrincipalName"/>
+                   <md:RequestedAttribute Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.13" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="eduPersonUniqueId"/>
+                   <md:RequestedAttribute Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="eduPersonTargetedID"/>
+
+                   <!-- user's name -->
+                   <md:RequestedAttribute Name="urn:oid:2.16.840.1.113730.3.1.241" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="displayName"/>
+                   <md:RequestedAttribute Name="urn:oid:2.5.4.42" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="givenName"/>
+                   <md:RequestedAttribute Name="urn:oid:2.5.4.4" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="sn"/>
+                   <md:RequestedAttribute Name="urn:oid:2.5.4.3" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="cn"/>
+                   <md:RequestedAttribute Name="urn:oid:2.5.4.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="o"/>
+
+                   <!-- additional user attribs -->
+                   <md:RequestedAttribute Name="urn:oid:0.9.2342.19200300.100.1.3" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="mail"/>
+                   <md:RequestedAttribute Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.11" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="eduPersonAssurance"/>
+
+                   <!-- organisational attribs -->
+                   <md:RequestedAttribute Name="urn:oid:1.3.6.1.4.1.25178.1.2.9" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" FriendlyName="schacHomeOrganization"/>
+              </md:AttributeConsumingService>
+            </Handler>
+
+            <!-- Status reporting service. -->
+            <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1"/>
+
+            <!-- Session diagnostic service. -->
+            <Handler type="Session" Location="/Session" showAttributeValues="false"/>
+
+            <!-- JSON feed of discovery information. -->
+            <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
+        </Sessions>
+
+        <!--
+        Allows overriding of error template information/filenames. You can
+        also add attributes with values that can be plugged into the templates.
+        -->
+        <Errors supportContact="root@localhost"
+            helpLocation="/about.html"
+            styleSheet="/shibboleth-sp/main.css"/>
+        
+        <!-- Example of remotely supplied batch of signed metadata. -->
+        <!--
+        <MetadataProvider type="XML" validate="true"
+	      uri="http://federation.org/federation-metadata.xml"
+              backingFilePath="federation-metadata.xml" reloadInterval="7200">
+            <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
+            <MetadataFilter type="Signature" certificate="fedsigner.pem"/>
+            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true" 
+              attributeName="http://macedir.org/entity-category"
+              attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+              attributeValue="http://refeds.org/category/hide-from-discovery" />
+        </MetadataProvider>
+        -->
+
+        <MetadataProvider type="XML"
+                          uri="{{ shib_idp_metadata }}"
+                          backingFilePath="idp-metadata.xml"
+                          reloadInterval="7200">
+        </MetadataProvider>
+ 
+        <!-- Example of locally maintained metadata. -->
+        <!--
+        <MetadataProvider type="XML" validate="true" file="partner-metadata.xml"/>
+        -->
+
+        <!-- Map to extract attributes from SAML assertions. -->
+	<AttributeExtractor type="Chaining">
+        	<AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
+		<!-- Extract the md:organizationDisplayName from the IdP metadata -->
+		<AttributeExtractor type="Metadata" OrganizationDisplayName="orgDisplayName"/>
+                <!-- Extract the entity ID of the REAL authenticating authority (not the RCAuth WAYF) -->
+                <AttributeExtractor type="Assertion" AuthenticatingAuthority="Shib-Authenticating-Authority"/>
+	</AttributeExtractor>        
+
+        <!-- Use a SAML query if no attributes are supplied during SSO. -->
+        <AttributeResolver type="Query" subjectMatch="true"/>
+
+        <!-- Default filtering policy for recognized attributes, lets other data pass. -->
+        <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
+
+        <!-- Simple file-based resolver for using a single keypair. -->
+        <CredentialResolver type="File" key="sp-key.pem" certificate="sp-cert.pem"/>
+
+        <!--
+        The default settings can be overridden by creating ApplicationOverride elements (see
+        the https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPApplicationOverride topic).
+        Resource requests are mapped by web server commands, or the RequestMapper, to an
+        applicationId setting.
+        
+        Example of a second application (for a second vhost) that has a different entityID.
+        Resources on the vhost would map to an applicationId of "admin":
+        -->
+        <!--
+        <ApplicationOverride id="admin" entityID="https://admin.example.org/shibboleth"/>
+        -->
+    </ApplicationDefaults>
+    
+    <!-- Policies that determine how to process and authenticate runtime messages. -->
+    <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
+
+    <!-- Low-level configuration about protocols and bindings available for use. -->
+    <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml"/>
+
+</SPConfig>

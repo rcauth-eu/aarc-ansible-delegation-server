@@ -1,0 +1,52 @@
+---
+
+# Create a CA
+
+- name: execute myproxy config script
+  shell: "grid-ca-create -subject \"cn={{ democa_cn }}, ou={{ democa_ou }}, o={{ democa_o }}\" -noint -force -pass {{ democa_pass }} -dir {{ democa_dir }} > /tmp/grid-ca-create.log 2>&1"
+  args:
+    creates: "{{ democa_dir }}/private/cakey.pem"
+
+- name: create (very long-lived) crl
+  shell: "openssl ca -gencrl -config {{ democa_dir }}/grid-ca-ssl.conf -passin pass:{{ democa_pass }} -crldays 3650 -out {{ democa_dir }}/crl.pem"
+
+- name: chown democa_dir
+  file:
+    path: "{{ democa_dir }}"
+    owner: myproxy
+    group: myproxy
+    recurse: yes
+
+# configure myproxy 
+
+- name: copy myproxy server config
+  template:
+    src: myproxy-server.config.j2
+    dest: "/etc/myproxy-server.config"
+    owner: myproxy
+    group: myproxy
+    mode: 0640
+    backup: yes
+  notify: restart myproxy
+
+- name: copy myproxy mapapp
+  template:
+    src: myproxy-certificate-mapapp.j2
+    dest: "{{ democa_extra_dir }}/myproxy-certificate-mapapp"
+    owner: myproxy
+    group: myproxy
+    mode: 0755
+    backup: yes
+
+# Override the X509_CERT_DIR for myproxy-server, defaults to
+# /etc/grid-security-certificates, but we want it in
+# whatever is defined as x509_cert_dir
+
+- name: set X509_CERT_DIR for myproxy-server
+  lineinfile:
+    dest: /usr/lib/systemd/system/myproxy-server.service
+    insertafter: '^Environment=X509_USER_KEY=.*$'
+    regexp: '^Environment=X509_CERT_DIR='
+    line: "Environment=X509_CERT_DIR={{ x509_cert_dir }}"
+    backup: yes
+  notify: restart myproxy

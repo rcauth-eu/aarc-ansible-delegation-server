@@ -1,0 +1,36 @@
+---
+
+# In production this will be done using the push_keys.sh script
+
+- name: create new ssh keypair
+  user:
+    name: root
+    generate_ssh_key: yes
+    ssh_key_file: /root/.ssh/id_rsa
+    ssh_key_bits: 4096
+    ssh_key_type: rsa
+    ssh_key_comment: "used for {{ ca_backup_user }} on {{ private_ds_fqdn }}"
+
+- name: ensure permissions and ownership of /root/.ssh/id_rsa.pub (overkill)
+  file:
+    path: /root/.ssh/id_rsa.pub
+    owner: root
+    group: root
+    mode: 0600
+
+# Copy directly when co-hosted
+- name: copy pubkey to ca_backup input authorized_keys file
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: "{{ ca_backup_pubkey_input }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0600
+  when: private_ds_address == private_ca_address
+
+# Copy remotely when not co-hosted
+- name: copy pubkey to ca_backup input authorized_keys file
+  command:
+    scp -p /root/.ssh/id_rsa.pub "{{ private_ds_fqdn }}:{{ ca_backup_pubkey_input }}"
+  when: not private_ds_address == private_ca_address

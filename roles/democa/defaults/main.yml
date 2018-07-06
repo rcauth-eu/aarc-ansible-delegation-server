@@ -1,0 +1,25 @@
+---
+########################################################################
+### DEFAULT VALUES FOR THE democa ROLE
+########################################################################
+
+### working directory for building the internal private CA between frontend and CA
+canet_dir: "/root/canet"
+
+### Host certificate, key and trust anchors for the MyProxy-based demoCA
+democa_creddir: "/etc/grid-security/myproxy"
+democa_hostcert: "{{ democa_creddir }}/hostcert.pem"
+democa_hostkey: "{{ democa_creddir }}/hostkey.pem"
+x509_cert_dir: "{{ democa_creddir }}/certificates"
+
+### directory containing the actual demoCA itself
+democa_dir: "/var/lib/globus/simple_ca"
+
+### directory for helper programs for myproxy-server
+democa_extra_dir: "/usr/local/bin"
+
+### lifetime of produced certificates in seconds
+democa_cert_lifetime: 8760
+
+### DN of the frontend (based on the internal CA)
+democa_authorized_retrievers: "/C={{ private_ca_country }}/O={{ private_ca_org }}/CN={{ private_ds_fqdn }}"

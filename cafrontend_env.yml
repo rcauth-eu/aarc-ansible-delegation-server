@@ -1,0 +1,14 @@
+---
+########################################################################
+### OVERRIDDEN VALUES FOR THE cafrontend ROLE
+########################################################################
+
+### Postfix config for the delegation server
+
+### smtp_server is used for both local and non-local mail, via mailbox_transport
+### and relayhost respectively. Set the appropriate value
+smtp_server: smtp.example.org
+### define a luser_relay to send all local email to, e.g. $user@example.org
+#luser_relay:
+root_alias: "ca-operator@example.org, /var/spool/mail/root"
+#postfix_mydestinations:

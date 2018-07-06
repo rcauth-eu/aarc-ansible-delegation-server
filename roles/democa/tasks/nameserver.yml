@@ -1,0 +1,16 @@
+---
+
+# Note: run this task last: it will break ansible when the frontend isn't ready
+
+- name: "Configure DS as nameserver"
+  lineinfile:
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{ private_ca_interface }}"
+    insertafter: '^BOOTPROTO='
+    regexp: '^DNS1="'
+    line: 'DNS1="{{ private_ds_address }}"'
+    state: present
+  notify: restart network
+  when: not private_ds_address == private_ca_address
+
+# flush handlers in order to restart network as soon as ifcfg changes 
+- meta: flush_handlers

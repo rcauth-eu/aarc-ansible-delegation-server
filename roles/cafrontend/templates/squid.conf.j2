@@ -1,0 +1,36 @@
+# Adapt to list your (internal) IP networks from where browsing
+# should be allowed
+acl localnet src {{ private_network }}
+
+# Safe portt
+acl SSL_ports port 443
+acl Safe_ports port 80          # http
+acl Safe_ports port 443         # https
+acl CONNECT method CONNECT
+
+# Deny unsafe ports
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+
+# Only allow cachemgr access from localhost
+http_access allow localhost manager
+http_access deny manager
+
+# We strongly recommend the following be uncommented to protect innocent
+# web applications running on the proxy server who think the only
+# one who can access services on "localhost" is a local user
+http_access deny to_localhost
+
+# Adapt localnet in the ACL section to list your (internal) IP networks
+# from where browsing should be allowed
+http_access allow localnet
+http_access allow localhost
+
+# And finally deny all other access to this proxy
+http_access deny all
+
+# Squid normally listens to port 3128, specify host or we listen on IPv6
+http_port {{ private_ds_address }}:3128
+
+# Leave coredumps in the first cache dir
+coredump_dir /var/spool/squid

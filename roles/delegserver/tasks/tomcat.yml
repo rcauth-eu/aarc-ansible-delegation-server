@@ -1,0 +1,132 @@
+---
+
+# Install tomcat
+
+- name: install tomcat
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ tomcat_packages }}"
+  register: tomcat_install
+
+- name: add CATALINA_HOME to bashrc
+  lineinfile:
+    dest: /etc/bashrc
+    state: present
+    line: "export CATALINA_HOME={{ catalina_home }}"
+    regexp: "^export CATALINA_HOME=.*"
+    insertafter: EOF
+    backup: yes
+
+# configurations
+
+# close unused ports?  
+
+# set tomcatAuthentication="false" so REMOTE_USER will be taken over from apache
+# and only listen on localhost
+
+- name: check if tomcat authentication is disabled (ignore errors)
+  command: grep 'Connector.*port="8009".*address="127.0.0.1" tomcatAuthentication="false"' "{{ catalina_home }}/conf/server.xml"
+  ignore_errors: True
+  changed_when: False
+  register: tomcat_auth
+
+- name: disable tomcat authnetication
+  lineinfile:
+     dest: "{{ catalina_home }}/conf/server.xml"
+     regexp: '^(.*)<Connector port="8009"(.*)$'
+     line: '\1<Connector port="8009" address="127.0.0.1" tomcatAuthentication="false"\2'
+     backrefs: yes
+     owner: "{{ tomcat_user }}"
+     group: "{{ tomcat_user }}"
+     mode: 0664
+     backup: yes
+  when: tomcat_auth.rc != 0
+  notify: restart tomcat
+
+# only listen on localhost on 8080
+
+- name: check if listening address is set to localhost
+  command: grep 'Connector.*port="8080".*address="127.0.0.1"' "{{ catalina_home }}/conf/server.xml"
+  ignore_errors: True
+  changed_when: False
+  register: tomcat_local_listen
+
+- name: set listening address to localhost
+  lineinfile:
+     dest: "{{ catalina_home }}/conf/server.xml"
+     regexp: '^(.*)<Connector port="8080"(.*)$'
+     line: '\1<Connector port="8080" address="127.0.0.1" \2'
+     backrefs: yes
+     owner: "{{ tomcat_user }}"
+     group: "{{ tomcat_user }}"
+     mode: 0664
+     backup: yes
+  when: tomcat_local_listen.rc != 0
+  notify: restart tomcat
+
+# add oa4mp configuration parameters
+
+- name: add oa4mp config parameters to web.xml
+  blockinfile:
+     dest: "{{ catalina_home }}/conf/web.xml"
+     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+     insertbefore: "</web-app>"
+     owner: "{{ tomcat_user }}"
+     group: "{{ tomcat_user }}"
+     mode: 0664
+     block: |
+       <context-param>
+          <param-name>oa4mp:oauth2.server.config.file</param-name>
+          <param-value>{{ oa4mp_server_conf_file }}</param-value>
+       </context-param>
+       <context-param>
+          <param-name>oa4mp:oauth2.server.config.name</param-name>
+          <param-value>default</param-value>
+       </context-param>
+  notify: restart tomcat
+
+# add javax.mail jar.
+# Note: the oauth2.war currently also ships a javax.mail.jar
+# Installing it here too breaks ("javax.mail.Session cannot be cast to
+# javax.mail.Session"), we must therefore skip it here.
+# Note: we therefore also cannot use the RPM for javamail.
+
+#- name: download javax.mail jar
+#  get_url:
+#    url: "{{ javax_mail_url }}"
+#    dest: "{{ catalina_home }}/lib/javax.mail.jar"
+#- name: set permission on javax.mail
+#  file:
+#    path: "{{ catalina_home }}/lib/javax.mail.jar"
+#    owner: root
+#    group: root
+#    mode: 0644
+
+# add mail resource to context.xml
+
+- name: add mail resource to context.xml
+  lineinfile:
+    dest: "{{ catalina_home }}/conf/context.xml"
+    state: present
+    line: "<Resource name=\"mail/Session\" type=\"javax.mail.Session\" auth=\"Container\"></Resource>"
+    insertbefore: "</Context>"
+    mode: 0664
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    backup: yes
+  notify: restart tomcat 
+
+# configure the private X509_CERT_DIR as an environmental variable 
+
+- name: set private X509_CERT_DIR variable
+  lineinfile:
+    dest: "{{ catalina_home }}/conf/tomcat.conf"
+    state: present
+    line: "X509_CERT_DIR=\"{{ oa4mp_server_certificates_dir }}\""
+    mode: 0664
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    backup: yes
+  notify: restart tomcat
+

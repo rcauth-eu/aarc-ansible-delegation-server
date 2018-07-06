@@ -1,0 +1,38 @@
+---
+
+### config additional repos
+
+- include: addn-repos.yml
+
+### other config required for backend CA
+
+- include: ca-sshd.yml
+- include: ca-backup.yml
+- include: ca_checker.yml
+
+### services required for DS itself
+
+- include: java.yml
+- include: tomcat.yml
+- include: httpd.yml
+- include: shib.yml
+#- include: mysql.yml
+- include: mariadb.yml
+#- include: postgresql.yml
+
+### config for DS itself
+
+- include: rsyncd.yml
+- include: mysql-backup.yml
+- include: oa4mp-server.yml
+
+### host certs, certdirs and truststores for tomcat and apache
+
+- include: hostcreds-tomcat.yml
+- include: hostcreds-apache.yml
+
+### enable services
+
+- name: enable services
+  service: name={{ item }} state=started enabled=yes
+  with_items: "{{ enabled_services }}"

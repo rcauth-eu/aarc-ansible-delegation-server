@@ -1,0 +1,82 @@
+---
+
+# Postfix Setup
+
+- name: configure postfix interface
+  lineinfile:
+     dest: "/etc/postfix/main.cf"
+     regexp: '^inet_interfaces\s+=.*$'
+     line: "inet_interfaces = localhost, {{ private_ds_fqdn }}"
+     owner: root
+     group: root
+     mode: 0644
+     backup: yes
+  register: postix_config
+
+- name: configure postfix local destinations
+  lineinfile:
+     dest: "/etc/postfix/main.cf"
+     regexp: '^mydestination\s+=.*$'
+     line: 'mydestination = $myhostname, localhost.$mydomain, localhost, $mydestination_canet'
+     owner: root
+     group: root
+     mode: 0644
+     backup: yes
+  register: postix_config
+
+- name: set up mail forwarding
+  blockinfile:
+     dest: "/etc/postfix/main.cf"
+     marker: "# {mark} FORWARDING RULES (ANSIBLE) "
+     owner: "root"
+     group: "root"
+     mode: 0644
+     insertafter: EOF
+     backup: yes
+     block: |
+       #myorigin = $mydomain
+       # first process the /etc/aliases
+       local_recipient_maps = $alias_maps
+       # catch-all for (still) unknown local recipients
+       luser_relay = {{ luser_relay }}
+       # local mail is handled by smtp_server
+       mailbox_transport = smtp:{{ smtp_server }}
+       # non-local mail is handled by smtp_server
+       relayhost = [{{ smtp_server }}]
+       mydestination_canet = {{ postfix_mydestinations }}
+       append_dot_mydomain = no
+  register: forward_config
+
+- name: make mail directory sticky-world writeable
+  file:
+    path: /var/spool/mail
+    state: directory
+    owner: root
+    mode: 01777
+
+- name: make local root mailbox writeable for group nobody
+  file:
+    path: /var/spool/mail/root
+    state: touch
+    group: nobody
+    mode: 0660
+
+- name: set root alias for mails
+  lineinfile:
+     dest: "/etc/aliases"
+     regexp: "#?root:.*"
+     line: 'root: {{ root_alias }}'
+     owner: root
+     group: root
+     mode: 0644
+     backup: yes
+  register: alias_config
+
+- name: initialise alias database
+  command: newaliases
+  when: alias_config.changed
+
+- name: restart posfix
+  service: name=postfix state=restarted enabled=yes
+  when: postix_config.changed or forward_config.changed or alias_config.changed
+

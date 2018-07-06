@@ -1,0 +1,45 @@
+---
+########################################################################
+### DEFAULT VALUES FOR THE delegserver ROLE
+########################################################################
+
+### CA certificates for the (Apache) hostcert/key, also used when getting
+### the Shibboleth assertion. You must override this depending on the CA.
+
+hostcert_ca_rpm: ca_TERENA-eScience-SSL-CA-3
+hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
+
+
+### Shibboleth settings: you MUST override (most) of these
+
+shib_entity_id: "https://{{ inventory_hostname }}"
+shib_idp_id: "https://wayf.example.org/wayf/saml2/idp/metadata.php"
+shib_idp_metadata: "https://wayf.example.org/wayf/saml2/idp/metadata.php"
+
+shib_meta_name: "Test RCAuth Pilot Delegation Service"
+shib_meta_desc: "Test RCAuth Pilot Delegation Service for providing end-user proxy certificates to Science Gateways and other portals"
+shib_meta_url: "https://www.example.org/"
+shib_meta_org: "Organization"
+shib_meta_org_link: "https://www.example.org/"
+
+shib_meta_admin_company: "Example"
+shib_meta_admin_name: "Operator"
+shib_meta_admin_mail: "admin@example.org"
+
+shib_meta_contact_company: "Example"
+shib_meta_contact_name: "Operator"
+shib_meta_contact_mail: "admin@example.org"
+
+shib_meta_sec_contact_company: "Example"
+shib_meta_sec_contact_name: "CSIRT"
+shib_meta_sec_contact_mail: "security@example.org"
+shib_meta_sec_contact_phone: "+1-2-34567890"
+
+shib_meta_tech_name: "Operator"
+shib_meta_tech_mail: "admin@example.org"
+
+
+### DS general settings
+
+### Default DS JSON web key id:
+oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"

@@ -1,0 +1,64 @@
+---
+
+# Install PostgreSQL Server
+
+- name: Install PostgreSQL
+  yum: name={{ item }} state=present
+  with_items: "{{ postgresql_packages }}"
+  register: postgresql_installation
+
+- name: make a link to the connector
+  file:
+    src: "{{ postgresql_connector_path }}/{{ postgresql_connector }}"
+    dest: "{{ catalina_home }}/lib/{{ postgresql_connector }}"
+    owner: root
+    group: root
+    state: link
+
+# Start PostgreSQL Server
+
+- name: initialize db service 
+  command: /usr/bin/initdb -D /var/lib/pgsql/data/ 
+  become: yes
+  become_user: postgres
+  when:  postgresql_installation.changed
+
+- name: Start the PostgreSQL service
+  service: name=postgresql state=started enabled=yes
+
+# Configure root password (but only on fresh installations)
+
+#- name: update mariadb root password for all root accounts
+#  mysql_user: name=root host={{ item }} password={{ mariadb_root_password }} priv=*.*:ALL,GRANT
+#  with_items:
+#    - 127.0.0.1
+#    - localhost
+#  when:  postgresql_installation.changed
+
+# check OA4MP Server DB
+
+- name: Create OA4MP Server DB
+  postgresql_db: 
+    name: "{{ oa4mp_server_db }}" 
+    state: present
+#    login_user: root
+#    login_password: "{{ mariadb_root_password }}"
+  register: server_db
+
+- name: copy oa4mp server postgresql script
+  template: 
+    src: oa4mp-server-postgrsel.sql.j2
+    dest: /tmp/oa4mp-server-postgrsql.sql
+  when: server_db.changed
+
+- name: execute oa4mp server sql script
+  command: psql -f /tmp/oa4mp-server-postgrsql.sql 
+  become: yes
+  become_user: postgres
+  when: server_db.changed
+
+- name: remove oa4mp server postgresql script
+  file:
+    path: /tmp/oa4mp-server-postgrsel.sql
+    state: absent
+  when: server_db.changed
