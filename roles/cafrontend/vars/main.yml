@@ -1,14 +1,1 @@
----
-
-### enabled and disabled services
-enabled_services: 
- - postfix
- - dnsmasq
- - squid
-
-### general package dependencies
-
-extra_packages:
- - postfix
- - dnsmasq
- - squid
+rh7.yml

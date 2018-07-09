@@ -13,7 +13,7 @@ democa_hostkey: "{{ democa_creddir }}/hostkey.pem"
 x509_cert_dir: "{{ democa_creddir }}/certificates"
 
 ### directory containing the actual demoCA itself
-democa_dir: "/var/lib/globus/simple_ca"
+democa_dir: "/var/lib/globus/{{ ca_topdir }}"
 
 ### directory for helper programs for myproxy-server
 democa_extra_dir: "/usr/local/bin"

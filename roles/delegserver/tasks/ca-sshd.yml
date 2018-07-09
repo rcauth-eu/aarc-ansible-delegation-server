@@ -15,11 +15,10 @@
         Match address {{ private_ca_address }}/32
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication no
-  notify: restart sshd
+  register: sshd_config
   when: not private_ca_address == private_ds_address
 
 # Restart sshd directly (also: we don't have the handler from the basic role)
 - name: restart sshd
-  service:
-    name: sshd
-    state: restarted
+  service: name=sshd state=restarted
+  when: sshd_config.changed

@@ -19,7 +19,11 @@ x509_cert_dir: /etc/grid-security/certificates
 #hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
 
 ### webserver configuration
-#webroot_redirect: "https://ca-pilot.aai.egi.eu/"
+# Optionally define a redirect for the index.html page
+#webroot_redirect: "https://www.example.org/"
+
+# Define an actual homepage, use index_empty.html.j2 for an empty page
+index_html_template: index_democa.html.j2
 
 ### Email address used to address warnings about the status of the backend CA
 

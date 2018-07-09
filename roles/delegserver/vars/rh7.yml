@@ -1,22 +1,20 @@
 ---
 
 ### enabled and disabled services
+
 enabled_services: 
  - tomcat
  - httpd
  - shibd
  - mariadb
 
-### general package dependencies
+### rsync constants. Note: rsync task is only run when rsync_hosts is set
 
-extra_packages:
+rsync_packages:
  - rsync
 
 ### java constants
 
-#java_download_url: "https://javadl.sun.com/webapps/download/AutoDL?BundleId=114680"
-#javax_mail_url: "https://java.net/projects/javamail/downloads/download/javax.mail.jar"
-#javax_mail_url: "https://github.com/javaee/javamail/releases/download/JAVAMAIL-1_6_1/javax.mail.jar"
 java_home: /usr/java/default
 
 ### tomcat constants
@@ -39,7 +37,7 @@ httpd_packages:
 httpd_service: httpd
 httpd_web_root: /var/www/html
 
-### IGTF
+### IGTF: Needed when (one of) the host certs is signed by an IGTF (intermediate) CA
 
 igtfkey: "https://dl.igtf.net/distribution/igtf/current-new/GPG-KEY-EUGridPMA-RPM-3"
 igtf_current_baseurl: "http://dist.eugridpma.info/distribution/igtf/current-new/"
@@ -68,23 +66,6 @@ shib_attr_map:
   - {name: "urn:oid:2.5.4.4", id: "sn"}
   - {name: "urn:oid:1.3.6.1.4.1.25178.1.2.9", id: "schacHomeOrganization"}
   - {name: "urn:oid:2.5.4.10", id: "o"}
-
-### mysql
-
-# NOTE
-# THERE IS NO MYSQL PACKAGE IN CENTOS7 SINCE IT COMES WITH THE MARIADB IMPLEMENTATION
-# YOU CAN INSTALL MTSQL FROM THE REPOSITORY BELOW, BUT THIS WILL NOT WORK PROPERLY 
-
-#mysql_repo_baseurl: http://repo.mysql.com/yum/mysql-5.7-community/el/7/$basearch/
-#mysql_repo_connectors_baseurl: http://repo.mysql.com/yum/mysql-connectors-community/el/7/$basearch/
-#mysql_repo_gpgkey: https://repo.mysql.com/RPM-GPG-KEY-mysql
-
-#mysql_packages:
-#  - mysql-community-server
-#  - mysql-connector-java
-#  - mysql-connector-python
-
-#mysql_root_password: changeme
 
 ### mariadb
 

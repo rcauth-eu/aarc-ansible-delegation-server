@@ -30,7 +30,8 @@ ntp_servers:
   - 1.pool.ntp.org
 
 
-### SSH Authorized users taken from LDAP
+### SSH Authorized users, key taken from LDAP
+### This currently requires also mkgroup-sshlpk from the nikhef_local_repo
 #authorized_uids:
 #  - admin1
 #  - admin2
@@ -61,6 +62,9 @@ private_ca_org: CANET
 private_ca_basedn: "O={{ private_ca_org }},C={{ private_ca_country }}"
 
 private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
+
+### top-level directory (without full-path) for the CA.
+ca_topdir: "simple_ca"
 
 ### Settings for the backup account for a backup from the CA
 ca_backup_user: "ca_backup"

@@ -10,6 +10,11 @@ SSLRandomSeed connect builtin
 
 SSLCryptoDevice builtin
 
+<VirtualHost *:80>
+    ServerName {{ inventory_hostname }}
+    Redirect / https://{{ inventory_hostname }}/
+</VirtualHost>
+
 <VirtualHost _default_:443>
 
     ServerName {{ inventory_hostname }}

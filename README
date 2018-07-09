@@ -1,64 +1,123 @@
-####################################################################################################
+###############################################################################
 Ansible Deploy Script for Delegation Server
-####################################################################################################
+###############################################################################
+
+
+What are these scripts for?
+-------------------------------------------------------------------------------
+
+These scripts are for deploying a Delegation Server (DS) with optionally a demo
+backend CA. To find out more about what this setup is useful for take a look at:
+https://wiki.nikhef.nl/grid/AARC_Pilot You can use these scripts to deploy a DS
+and optionally backend demo CA either on different hosts or a single host.
+
+The demo CA is deployed using the democa playbook. The delegation server itself
+is deployed using two playbooks, cafrontend and delegserver. The first playbook
+(cafrontend) sets up the basic DS host including the network to communicate with
+the backend CA. The delegserver playbook sets up the actual delegation server
+part, using the results from the CA setup.
+
+
+Prerequisites
+-------------------------------------------------------------------------------
+
+ 1. You need to have host certificates ready for the DS. Place your PEM
+    formatted  certificate and key file in the 'roles/delegserver/files/'
+    directory (see the *.crt.PLACEHOLDER and *.key.PLACEHOLDER files).
+    You need to define the corresponding CA tarball or RPM variable
+    (hostcert_ca_tarball or hostcert_ca_rpm) and in case of a sub-CA you need to
+    set the hostcert_intermediate variable to the correct PEM file.
+    In case of a hostcert_ca_tarball, place the input tarball in
+    roles/delegserver/files
+ 
+ 2. Make sure you have replaced the oauth2.war and oa2-cli.jar .PLACEHOLDER
+    files in 'roles/delegserver/files/' with the actual files.
+    For rebuilding, see
+	https://github.com/rcauth-eu/aarc-delegation-server
+    which builds
+	./delegation-server/target/oauth2.war
+    For rebuilding the oa2-cli.jar you need to enable the cli profile
+    (see ./oa4mp-server-admin-oauth2/pom.xml)
+	mvn -P cli package
+    which builds
+	./delegation-server/target/oa2-cli.jar
+ 
+ 3. Download a new Oracle Java RPM (8 has been verified), and rename or create a
+    symlink in 'roles/delegserver/files/' named jre.rpm.
+ 
+ 4. You need to create a JSON Web Keys file to replace ds.jwk.PLACEHOLDER file
+    in 'roles/delegserver/files/':
+    - Create a dummy config file:
+       echo '<config>\n<service/>\n</config>' > tmp.conf
+    - Run the oa2-cli tool locally:
+       java -jar ./roles/delegserver/files/oa2-cli.jar -log tmp.log -cfg tmp.conf
+    - Choose "use keys" then run "create"
+    - Choose as filename './roles/delegserver/files/ds.jwk'
+    - exit the commandline tool (enter 'exit' twice)
+    - remove the 'tmp.conf' and 'tmp.log' files
+    Lookup the 'kid' in the created file, use e.g. the RS256 key and enter the
+    value as 'oa4mp_server_jwk_key_id' in 'delegserver_env.yml'
+ 
+ 5. You need to create the passphrases for the different components.
+    This can be done using the secrets.yml playbook.
+
 
 How to use these scripts?
+-------------------------------------------------------------------------------
 
-        Before you can use these scripts, there are a couple of deployments
-        specific setting you will have to tweak.
+Before you can use these scripts, there are a couple of deployments specific
+setting you will have to tweak. You need to decide whether to deploy a demoCA or
+use a production-based backend CA. In case of a demo CA, you need to decide
+whether to run the (demo) CA on a different host and if so whether to use a
+separate interface on the delegation server itself.
 
-        1. It is assumed that you are configuring a single machine to be The
-           Delegation Server. This target machine is configured in an inventory
-           file called 'testnet-delegserver' by its hostname/ip.
-           In case you want to configure more than one target, add your target
-           hostnames/ips to the '[delegserver]' group in the
-           'testnet-delegserver' inventory file.
+For an installation, you typically run in order
+    ansible-playbook -i hosts.inventory cafrontend
+    ansible-playbook -i hosts.inventory democa
+    ansible-playbook -i hosts.inventory delegserver
+In case of a full backend CA, you would not run the second playbook, but instead
+run an installation of that CA at that point in time.
 
-        2. Configure every host specific variable in the 'host_vars' directory
-           for each of your targets from 1. Use the already existing file under
-           'host_vars' to see which variables to set 
+Configuration:
 
-        3. You should configure your environment specific varaibles in
-           'cafrontend_env.yml' and 'delegserver_env.yml'. These files contain
-           default from the two ansible roles: cafrontend and delegserver. Some
-           of them you may leave as default (some standard paths like
-           /etc/grid-security/), but others you should definitaly change
-           (passwords, urls)!
+1. set the correct hostnames in hosts.inventory
+   For a co-hosted installation, specify the same name for democa and
+   delegserver.
 
-        4. Make sure to look through the template files under
-           'roles/cafrontend/templates' and 'roles/delegserver/templates'.
-           Infrastructure specific information, such as iptables rules can be
-           found here. Make sure to customize these templates to your specific
-           infrastructure.
+2. common_env.yml
 
-        5. These deployment scripts do not contain the actual Delegation Server
-           package (oauth2.war) or it's helper tools (oa2-cli.jar)! This is
-           because these deployment scripts are meant to be used with any
-           Delegation Server version/flavour. Make sure to replace the .jar and
-	   .war files marked .PLACEHOLDER under 'roles/delegserver/files/' with
-	   the real software you want to deploy!
-           For rebuilding, see
-            https://github.com/rcauth-eu/aarc-delegation-server
-           which builds
-            ./delegation-server/target/oauth2.war
-           For rebuilding the oa2-cli.jar you need to enable the cli profile
-           (see ./oa4mp-server-admin-oauth2/pom.xml)
-            mvn -P cli package
-           which builds
-            ./delegation-server/target/oa2-cli.jar
-	
-	6. You need to create a JSON Web Keys file to replace the
-	   ds.jwk.PLACEHOLDER file in 'roles/delegserver/files/'
-	   - Create a dummy config file:
-	      echo '<config>\n<service/>\n</config>' > tmp.conf
-	   - Run the oa2-cli tool locally:
-	      java -jar ./roles/delegserver/files/oa2-cli.jar -cfg tmp.conf
-	   - Choose "use keys" then run "create"
-	   - Choose as filename './roles/delegserver/files/ds.jwk'
-	   - exit the commandline tool (enter 'exit' twice)
-	   - remove the 'tmp.conf' file
-	   Lookup the 'kid' in the created file, use e.g. the RS256 key and
-	   enter the value as 'oa4mp_server_jwk_key_id' in 'delegserver_env.yml'
+    a. this mostly should define the private network between the delegation
+       server and the backend CA. It overrides variables set in
+       roles/common/defaults/main.yml.
+   
+   The common role is not a full role, but a collection of common variables used
+   by the different playbooks (cafrontend, democa and delegserver).
 
-        7. Execute: 'ansible-playbook -i testnet-delegserver delegserver.yml'.
-           Time to grab a coffee (or lunch)! 
+2. cafrontend_env.yml
+
+    a. this defines postfix-related variables for the delegation server.
+       It overrides settings from roles/cafrontend/defaults/main.yml
+
+   The cafrontend playbook sets up the first part of the Delegation Server,
+   which is necessary to install the backend CA for which it is a squid and DNS.
+   It also runs the basic role which sets up a generic machine.
+
+3. delegserver_env.yml
+
+    a. this mostly sets the Shibboleth configuration, but also the correct
+       Apache hostcred's CA variables and the JSON web key config.
+       It overrides settings from roles/delegserver/defaults/main.yml
+
+    The delegserver playbook sets up the remaining part of the delegation
+    server, including tomcat, apache etc.
+
+4. democa_env.yml
+
+    a. this sets the environment for the demo backend CA. Normally the defaults
+       set in roles/democa/defaults/main.yml do not need overriding.
+
+   The democa playbook sets up a fully functional backend CA. It also first runs
+   the basic role which sets up a generic machine. The democa playbook uses
+   the machine setup by the cafrontend playbook for its installation and
+   produces a few output files which it leaves on that host and which are input
+   for the delegserver playbook.

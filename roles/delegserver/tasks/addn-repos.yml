@@ -2,18 +2,20 @@
 
 # IGTF 
 
-#- name: adding IGTF GPG key
-#  rpm_key:
-#    key: "{{ igtfkey }}"
-#    state: present
-#
-#- name: adding IGTF repository (current-new)
-#  template:
-#    src: eugridpma.repo.j2
-#    dest: /etc/yum.repos.d/eugridpma.repo
-#    owner: "root"
-#    group: "root"
-#    mode: 0644
+- name: adding IGTF GPG key
+  rpm_key:
+    key: "{{ igtfkey }}"
+    state: present
+  when: igtfkey is defined
+
+- name: adding IGTF repository (current-new)
+  template:
+    src: eugridpma.repo.j2
+    dest: /etc/yum.repos.d/eugridpma.repo
+    owner: "root"
+    group: "root"
+    mode: 0644
+  when: igtf_current_baseurl is defined
 
 # Shibboleth 
 

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Note: mkgroup-sshlpk comes from the Nikhef Local repository
+/usr/local/sbin/mkgroup-sshlpk -o /root/.ssh/authorized_keys {% for uid in authorized_uids %} --uid "{{ uid }}" {% endfor %}

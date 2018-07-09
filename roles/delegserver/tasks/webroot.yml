@@ -1,0 +1,50 @@
+---
+
+# setup the webroot for Apache: first replace welcome page
+
+- name: replace apache welcome page
+  template:
+    src: "{{ index_html_template }}"
+    dest: "{{ httpd_web_root }}/index.html"
+    owner: root
+    group: root
+    mode: 0644
+
+# publish last CRL to web root with cron
+
+- name: copy cronjob to sbin
+  template:
+    src: crl_publish.sh.j2
+    dest: /usr/local/sbin/crl_publish.sh
+    owner: root
+    group: root
+    mode: 0744
+
+- name: add cron job to run crl_publish script
+  cron:
+    name: "Copy CRLs every minute to webroot for publishing"
+    cron_file: crl_publish
+    user: root
+    job: "/usr/local/sbin/crl_publish.sh"
+
+# Next three steps are only relevant for a (demo)ca tarball
+
+- name: check existence of a demoCA tarball
+  stat:
+    path: "/root/{{ democa_tarball }}"
+  ignore_errors: yes
+  register: ca_tarball
+
+- name: unpack (part of) ca_tarball into webroot
+  command: "tar -C {{ httpd_web_root }} -zxf /root/{{ democa_tarball }} {{ democa_name }}.\\*"
+  when: ca_tarball.stat.exists == true
+
+- name: copy ca_tarball into webroot
+  copy:
+    src: "/root/{{ democa_tarball }}"
+    dest: "{{ httpd_web_root }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: 0644
+  when: ca_tarball.stat.exists == true

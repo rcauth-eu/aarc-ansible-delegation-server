@@ -27,36 +27,3 @@
     mode: 0644
     backup: yes
   notify: restart httpd
-
-# replace welcome page
-#
-#- name: replace apache welcome page
-#  stat:
-#    path: "{{ httpd_web_root }}/index.html"
-#  ignore_errors: yes
-#  register: index_page
-#
-#- name: create index page
-#  file:
-#    path: "{{ httpd_web_root }}/index.html"
-#    owner: root
-#    group: root
-#    mode: 0644
-#    state: touch
-#  when: index_page.stat.exists == false
-
-# publish last CRL to web root with cron
-#
-#- name: copy cronjob to sbin
-#  template:
-#    src: crl_publish.sh.j2
-#    dest: /usr/local/sbin/crl_publish.sh
-#    owner: root
-#    group: root
-#    mode: 0744
-#
-#- name: add cron job to run crl_publish script
-#  cron:
-#    name: "publish crl"
-#    user: root
-#    job: "/usr/local/sbin/crl_publish.sh"

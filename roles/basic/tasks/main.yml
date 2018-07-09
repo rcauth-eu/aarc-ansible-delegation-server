@@ -4,12 +4,16 @@
 
 - include: hostname.yml
 - include: sshd.yml
+
 - include: epelrepo.yml
-#- include: nikhefrepo.yml
 - include: yum.yml
+# Note: for a non-Nikhef setup, you (probably) want to skip the next
+- include: nikhefrepo.yml
+
 - include: network.yml
 - include: iptables.yml
 - include: access.yml
+- include: rootssh.yml
 - include: ntpd.yml
 
 # list of disabled services

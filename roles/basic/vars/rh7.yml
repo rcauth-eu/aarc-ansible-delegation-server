@@ -1,5 +1,5 @@
 ---
-# general packages that should be present
+### general packages that should be present
 
 general_packages: 
   - libselinux-python
@@ -7,19 +7,16 @@ general_packages:
   - bind-utils
   - mailx
   - sysstat
-#  - smartmontools
-#  - ipmitool
   - ntp
   - iptables-services
   - patch
   - xinetd
   - nscd
   - authconfig
+#  - smartmontools
+#  - ipmitool
 
-#nikhef_packages:
-#  - mkgroup-sshlpk
-
-# list of enabled and disabled services 
+### list of enabled and disabled services 
 
 enabled_services:
   - ntpd
@@ -32,11 +29,15 @@ disabled_services:
   - firewalld
 #  - avahi-daemon
 
-# additional repository information
+### additional repository information
 
 epelrpm: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
 epelkey: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7"
 
+### Nikhef repo is used for mkgroup-sshlpk used in the rootssh.cron script
 #nikhef_local_repo: nikhef-local-packages
 #nikhef_local_baseurl: "https://www.nikhef.nl/grid/ndpf/files/local/packages"
+
+#nikhef_packages:
+#  - mkgroup-sshlpk
 

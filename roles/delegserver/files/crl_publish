@@ -1,0 +1,2 @@
+# Copy CRLs every minute to webroot for publishing
+* * * * * root /usr/local/sbin/crl_publish.sh

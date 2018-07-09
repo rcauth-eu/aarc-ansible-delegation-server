@@ -8,6 +8,6 @@
     - secrets_env.yml
   roles:
     - common
-    - basic
+    - { role: basic, when: not private_ds_address == private_ca_address }
     - democa
   tasks:

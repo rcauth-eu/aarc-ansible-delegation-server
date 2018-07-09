@@ -1,10 +1,20 @@
 ---
 
+### enabled and disabled services
+
 enabled_services:
  - myproxy-server
  - postfix
 
+### general package dependencies
+
 extra_packages:
+ - postfix
+ - rsync
+
+### myproxy constants:
+
+myproxy_packages:
  - myproxy-server
  - myproxy-admin
  - myproxy-doc
