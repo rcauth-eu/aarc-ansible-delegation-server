@@ -11,9 +11,9 @@
      group: root
      mode: 0644
      backup: yes
-  register: postix_config
+  register: postfix_config
   when: not private_ds_address == private_ca_address
 
-- name: restart posfix
+- name: restart postfix
   service: name=postfix state=restarted enabled=yes
-  when: postix_config.changed
+  when: postfix_config.changed

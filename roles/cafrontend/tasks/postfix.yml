@@ -11,7 +11,7 @@
      group: root
      mode: 0644
      backup: yes
-  register: postix_config
+  register: postfix_config
 
 - name: configure postfix local destinations
   lineinfile:
@@ -22,7 +22,7 @@
      group: root
      mode: 0644
      backup: yes
-  register: postix_config
+  register: postfix_config
 
 - name: set up mail forwarding
   blockinfile:
@@ -76,7 +76,7 @@
   command: newaliases
   when: alias_config.changed
 
-- name: restart posfix
+- name: restart postfix
   service: name=postfix state=restarted enabled=yes
-  when: postix_config.changed or forward_config.changed or alias_config.changed
+  when: postfix_config.changed or forward_config.changed or alias_config.changed
 
