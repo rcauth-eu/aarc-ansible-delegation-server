@@ -12,5 +12,6 @@ pid file = /var/run/rsyncd.pid
        list = false
        auth users = backup
        secrets file = /etc/rsyncd.secrets
-       hosts allow = {{ rsync_hosts }}
+       hosts allow = {% for rsync_host in rsync_hosts %} {{ rsync_host }} {% endfor %}
+
        hosts deny = 0.0.0.0/0
