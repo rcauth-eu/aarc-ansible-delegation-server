@@ -8,7 +8,8 @@ enabled_services:
  - shibd
  - mariadb
 
-### rsync constants. Note: rsync task is only run when rsync_hosts is set
+### rsync constants. Note: rsync task is only run when rsync_hosts is set (see
+### the common role)
 
 rsync_packages:
  - rsync

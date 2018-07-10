@@ -24,6 +24,20 @@ private_ds_address: 192.168.1.254
 private_ca_address: 192.168.1.1
 
 
+### You must define or override the networks parsed as local and networks/hosts
+### trusted for ssh (the latter must be in the former)
+#local_nets:
+#  - 1.2.3.0/24
+
+#trusted_nets:
+#  - 1.2.3.4/32
+
+
+### Backup Server configuration: defines hosts allowed to rsync from DS
+#rsync_path: /
+#rsync_hosts: 1.2.3.8/32
+
+
 ### NTP Server
 ntp_servers: 
   - 0.pool.ntp.org

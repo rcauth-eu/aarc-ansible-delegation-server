@@ -29,11 +29,6 @@ index_html_template: index_democa.html.j2
 
 contact: "root@localhost"
 
-### Backup Server configuration: defines hosts allowed to rsync from DS
-
-#rsync_hosts: 192.168.2.0/32
-#rsync_path: /
-
 
 ### Shibboleth settings: you MUST override (most) of these
 
