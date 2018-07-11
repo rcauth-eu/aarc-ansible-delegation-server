@@ -50,6 +50,7 @@
   shell:
     tar -zcf "{{ democa_dir }}/{{ democa_tarball }}" *
   args:
+    warn: false
     chdir: "{{ democa_tmp.path }}"
 
 - name: remove tempdir
