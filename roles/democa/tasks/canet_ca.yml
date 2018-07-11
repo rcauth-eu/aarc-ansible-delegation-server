@@ -32,6 +32,14 @@
     mode: 0600
   when: private_ds_address == private_ca_address
 
+# Add ssh pubkeys of single host to known_hosts file for root when co-hosted
+- name: setting up known_hosts file for root
+  shell: "sed 's/^/{{ private_ds_fqdn }} /' /etc/ssh/ssh_host_*.pub > /root/.ssh/known_hosts"
+  args:
+    warn: false
+    creates: /root/.ssh/known_hosts
+  when: private_ds_address == private_ca_address
+
 # Copy remotely frontend credentials when not co-hosted.
 # Note: we disable StrictHostKeyChecking this first time
 - name: copy frontend credentials to the delegation server
