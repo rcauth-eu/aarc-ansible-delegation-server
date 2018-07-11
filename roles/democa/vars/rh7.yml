@@ -6,10 +6,14 @@ enabled_services:
  - myproxy-server
  - postfix
 
-### general package dependencies
+### general package dependencies, installed in the basic role
 
 extra_packages:
  - postfix
+
+### backup constants
+
+backup_packages:
  - rsync
 
 ### myproxy constants:
@@ -19,4 +23,3 @@ myproxy_packages:
  - myproxy-admin
  - myproxy-doc
  - globus-simple-ca
-

@@ -2,12 +2,12 @@
 
 ### enabled and disabled services
 
-enabled_services: 
+enabled_services:
  - postfix
  - dnsmasq
  - squid
 
-### general package dependencies
+### general package dependencies, installed in the basic role
 
 extra_packages:
  - postfix

@@ -21,8 +21,8 @@
 - name: unpack private credentials
   unarchive:
     src: "{{ private_dscreds_tarball }}"
+    remote_src: true
     dest: "{{ private_creds_tmp.path }}"
-    copy: no
   when: priv_creds.stat.exists 
 
 - name: create private trusted certificates dir and set attributes
