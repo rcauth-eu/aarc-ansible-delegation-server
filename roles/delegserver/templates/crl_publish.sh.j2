@@ -1,4 +1,9 @@
 #!/bin/sh
+if [ ! -f "{{ ca_backup_backup }}/{{ ca_topdir }}/crl.pem" ];then
+    # Optionally emit warning and/or non-zero exit value
+    # NOTE: we are typically called once a minute, so an error can fill mailbox.
+    exit 0
+fi
 /usr/bin/cp -p {{ ca_backup_backup }}/{{ ca_topdir }}/crl.pem {{ httpd_web_root }}/crl.pem.new && \
     /usr/bin/chown root.root {{ httpd_web_root }}/crl.pem.new && \
     /usr/bin/chmod o+r {{ httpd_web_root }}/crl.pem.new && \
