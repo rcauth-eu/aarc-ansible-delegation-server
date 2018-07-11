@@ -37,6 +37,8 @@
 
 - name: unpack (part of) ca_tarball into webroot
   command: "tar -C {{ httpd_web_root }} -zxf /root/{{ democa_tarball }} {{ democa_name }}.\\*"
+  args:
+    warn: false
   when: ca_tarball.stat.exists == true
 
 - name: copy ca_tarball into webroot
