@@ -9,3 +9,6 @@ myhost.mydomain
 
 [delegserver]
 myhost.mydomain
+
+[all:vars]
+configdir=config/PLACEHOLDER

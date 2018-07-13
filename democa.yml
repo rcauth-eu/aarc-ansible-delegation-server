@@ -2,8 +2,8 @@
 - hosts: democa
   remote_user: root
   vars_files:
-    - common_env.yml
-    - democa_env.yml
+    - "{{ configdir }}common_env.yml"
+    - "{{ configdir }}democa_env.yml"
     #  include the results of password_generator.yml
     - secrets_env.yml
   roles:

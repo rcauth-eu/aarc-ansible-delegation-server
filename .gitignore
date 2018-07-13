@@ -1,5 +1,5 @@
-# Do not accidentally add the created secrets_env.yml
-/secrets_env.yml
+# Do not accidentally add the created secrets_env.yml in any directory
+secrets_env.yml
 
 # Do not accidentally add the host cert/key
 /roles/delegserver/files/*.key

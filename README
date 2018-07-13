@@ -83,6 +83,10 @@ Configuration:
 1. set the correct hostnames in hosts.inventory
    For a co-hosted installation, specify the same name for democa and
    delegserver.
+   You can set a configdir variable in the inventory, which will be used as
+   prefix when including the different _env.yml files described below. This
+   makes it easy to have different inventory files for different layouts, but
+   each with the same playbooks.
 
 2. common_env.yml
 
