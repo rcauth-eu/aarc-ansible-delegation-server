@@ -59,7 +59,11 @@ Prerequisites
     value as 'oa4mp_server_jwk_key_id' in 'delegserver_env.yml'
  
  5. You need to create the passphrases for the different components.
-    This can be done using the secrets.yml playbook.
+    This can be done using the secrets.yml playbook. Run it using
+	ansible-playbook -e configdir=<path-to-config-dir> secrets.yml
+    or set already the right configdir in your inventory file and run
+	ansible-playbook -i hosts.inventory secrets.yml
+    
 
 
 How to use these scripts?
@@ -72,9 +76,9 @@ whether to run the (demo) CA on a different host and if so whether to use a
 separate interface on the delegation server itself.
 
 For an installation, you typically run in order
-    ansible-playbook -i hosts.inventory cafrontend
-    ansible-playbook -i hosts.inventory democa
-    ansible-playbook -i hosts.inventory delegserver
+    ansible-playbook -i hosts.inventory cafrontend.yml
+    ansible-playbook -i hosts.inventory democa.yml
+    ansible-playbook -i hosts.inventory delegserver.yml
 In case of a full backend CA, you would not run the second playbook, but instead
 run an installation of that CA at that point in time.
 
