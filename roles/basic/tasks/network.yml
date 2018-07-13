@@ -6,6 +6,16 @@
   register: interfacescripts
   changed_when: false
 
+- name: enable DHCPv6 on public DS interface
+  lineinfile:
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{ public_ds_interface }}"
+    insertafter: "^IPV6INIT="
+    regexp: "^DHCPV6C=.*"
+    line: 'DHCPV6C="yes"'
+    backup: yes
+  notify: restart network
+  when: inventory_hostname == groups.delegserver.0
+
 - name: "disable network manager in {{ item }}"
   lineinfile:
     dest: "{{ item }}"
