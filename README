@@ -101,7 +101,7 @@ Configuration:
    The common role is not a full role, but a collection of common variables used
    by the different playbooks (cafrontend, democa and delegserver).
 
-2. cafrontend_env.yml
+3. cafrontend_env.yml
 
     a. this defines postfix-related variables for the delegation server.
        It overrides settings from roles/cafrontend/defaults/main.yml
@@ -110,7 +110,7 @@ Configuration:
    which is necessary to install the backend CA for which it is a squid and DNS.
    It also runs the basic role which sets up a generic machine.
 
-3. delegserver_env.yml
+4. delegserver_env.yml
 
     a. this mostly sets the Shibboleth configuration, but also the correct
        Apache hostcred's CA variables and the JSON web key config.
@@ -119,7 +119,7 @@ Configuration:
     The delegserver playbook sets up the remaining part of the delegation
     server, including tomcat, apache etc.
 
-4. democa_env.yml
+5. democa_env.yml
 
     a. this sets the environment for the demo backend CA. Normally the defaults
        set in roles/democa/defaults/main.yml do not need overriding.
