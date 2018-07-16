@@ -11,4 +11,4 @@ myhost.mydomain
 myhost.mydomain
 
 [all:vars]
-configdir=config/PLACEHOLDER
+configdir=config/PLACEHOLDER/

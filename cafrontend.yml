@@ -2,8 +2,8 @@
 - hosts: delegserver
   remote_user: root
   vars_files:
-    - "{{ configdir }}common_env.yml"
-    - "{{ configdir }}cafrontend_env.yml"
+    - "{{ configdir }}/common_env.yml"
+    - "{{ configdir }}/cafrontend_env.yml"
   roles:
     - common
     - basic

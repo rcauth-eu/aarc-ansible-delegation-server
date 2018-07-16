@@ -5,10 +5,6 @@
   ignore_errors: yes 
   register: passwd_lookup
 
-- name: log
-  debug:
-    msg: "found: {{ passwd_lookup }}"
-
 - name: "generate new password for {{ item }}"
   shell: "openssl rand -base64 21 | tr '[/+]' 'X' | tr -d '\n'"
   register: new_passwd
