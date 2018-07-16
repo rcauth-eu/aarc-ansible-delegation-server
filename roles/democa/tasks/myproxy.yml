@@ -47,9 +47,16 @@
 # /etc/grid-security-certificates, but we want it in
 # whatever is defined as x509_cert_dir
 
+- name: copy default systemd myproxy service file
+  copy:
+    src: /usr/lib/systemd/system/myproxy-server.service
+    dest: /etc/systemd/system/myproxy-server.service
+    remote_src: yes
+    force: no
+
 - name: set X509_CERT_DIR for myproxy-server
   lineinfile:
-    dest: /usr/lib/systemd/system/myproxy-server.service
+    dest: /etc/systemd/system/myproxy-server.service
     insertafter: '^Environment=X509_USER_KEY=.*$'
     regexp: '^Environment=X509_CERT_DIR='
     line: "Environment=X509_CERT_DIR={{ x509_cert_dir }}"
