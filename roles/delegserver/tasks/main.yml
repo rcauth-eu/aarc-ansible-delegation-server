@@ -34,6 +34,6 @@
 
 ### enable services
 
-- name: enable services
+- name: enable and start services
   service: name={{ item }} state=started enabled=yes
   with_items: "{{ enabled_services }}"

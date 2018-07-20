@@ -19,7 +19,7 @@
 # list of disabled services
 # need to stop e.g. firewalld before starting iptables
 
-- name: disable services 
+- name: disable services
   service: name={{ item }} state=stopped enabled=no
   with_items: "{{ disabled_services }}"
 

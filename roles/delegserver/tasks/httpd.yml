@@ -9,7 +9,7 @@
 # configure
 
 - name: httpd config file present
-  template: 
+  template:
     src: ssl.conf.j2
     dest: /etc/httpd/conf.d/ssl.conf
     owner: root
@@ -18,8 +18,8 @@
     backup: yes
   notify: restart httpd
 
-- name: httpoxy config present 
-  copy: 
+- name: httpoxy config present
+  copy:
     src: 00-httpoxy.conf
     dest: /etc/httpd/conf.d/00-httpoxy.conf
     owner: root

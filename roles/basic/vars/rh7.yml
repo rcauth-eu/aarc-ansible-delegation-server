@@ -21,13 +21,12 @@ general_packages:
 enabled_services:
   - ntpd
   - iptables
-#  - ip6tables
+  - ip6tables
 
 disabled_services:
   - NetworkManager
   - wpa_supplicant
   - firewalld
-#  - avahi-daemon
 
 ### additional repository information
 
