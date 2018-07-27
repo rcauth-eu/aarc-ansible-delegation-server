@@ -2,35 +2,35 @@
 
 ### config additional repos
 
-- include: addn-repos.yml
+- import_tasks: addn-repos.yml
 
 ### other config required for backend CA
 
-- include: ca-sshd.yml
-- include: ca-backup.yml
-- include: ca_checker.yml
+- import_tasks: ca-sshd.yml
+- import_tasks: ca-backup.yml
+- import_tasks: ca_checker.yml
 
 ### services required for DS itself
 
-- include: java.yml
-- include: tomcat.yml
-- include: httpd.yml
-- include: shib.yml
-- include: mariadb.yml
-#- include: postgresql.yml
+- import_tasks: java.yml
+- import_tasks: tomcat.yml
+- import_tasks: httpd.yml
+- import_tasks: shib.yml
+- import_tasks: mariadb.yml
+#- import_tasks: postgresql.yml
 
 ### config for DS itself
 
-- include: rsyncd.yml
+- import_tasks: rsyncd.yml
   when: rsync_hosts is defined
-- include: mysql-backup.yml
-- include: oa4mp-server.yml
-- include: webroot.yml
+- import_tasks: mysql-backup.yml
+- import_tasks: oa4mp-server.yml
+- import_tasks: webroot.yml
 
 ### host certs, certdirs and truststores for tomcat and apache
 
-- include: hostcreds-tomcat.yml
-- include: hostcreds-apache.yml
+- import_tasks: hostcreds-tomcat.yml
+- import_tasks: hostcreds-apache.yml
 
 ### enable services
 

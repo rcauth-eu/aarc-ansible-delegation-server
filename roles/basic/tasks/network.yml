@@ -1,19 +1,21 @@
 ---
-# Ugly hack to get the interfacescripts of all the available interfaces
-- name: get interfaces
-  shell: "ls /sys/class/net/ | grep -v 'lo'"
-  register: interfaces
-  changed_when: false
-
+# Look for scripts for the existing non-loopback interfaces
 - name: get interface scripts
-  shell: "ls /etc/sysconfig/network-scripts/* | egrep '{% for if in interfaces.stdout_lines %}ifcfg-{{ if }}$|{% endfor %}^$'"
-  register: interfacescripts
-  changed_when: false
+  find:
+    path: /etc/sysconfig/network-scripts
+    pattern: "ifcfg-({{ ansible_interfaces | reject('equalto', 'lo') | join('|') }})$"
+    use_regex: yes
+  register: find_output
 
+# Make list of their paths
+- set_fact:
+    interface_scripts: "{{ find_output.files | map(attribute='path') | list }}"
+
+# Note that changing the way to get IPv6 might need expiring leases on server
+# side, since (probably) the client-id will change
 - name: enable DHCPv6 on public DS interface
   lineinfile:
     dest: "/etc/sysconfig/network-scripts/ifcfg-{{ public_ds_interface }}"
-    insertafter: "^IPV6INIT="
     regexp: "^DHCPV6C=.*"
     line: 'DHCPV6C="yes"'
     backup: yes
@@ -27,7 +29,7 @@
     line: "NM_CONTROLLED=no"
     backup: yes
   notify: restart network
-  with_items: "{{ interfacescripts.stdout_lines }}" 
+  with_items: "{{ interface_scripts }}"
 
 # flush handlers in order to restart network as soon as ifcfg changes 
 - meta: flush_handlers

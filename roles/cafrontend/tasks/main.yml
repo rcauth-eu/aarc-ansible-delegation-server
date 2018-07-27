@@ -2,14 +2,14 @@
 
 ### config private network
 
-- include: ca-network.yml
+- import_tasks: ca-network.yml
 
 ### services required for backend CA
 
-- include: dnsmasq.yml
-- include: postfix.yml
-- include: squid.yml
-- include: ca-sshd.yml
+- import_tasks: dnsmasq.yml
+- import_tasks: postfix.yml
+- import_tasks: squid.yml
+- import_tasks: ca-sshd.yml
 
 ### enable services
 

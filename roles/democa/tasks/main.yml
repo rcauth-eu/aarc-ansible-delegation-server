@@ -2,22 +2,22 @@
 
 # basic configuration
 
-- include: hosts.yml
-- include: nameserver.yml
-- include: yum_squid.yml
+- import_tasks: hosts.yml
+- import_tasks: nameserver.yml
+- import_tasks: yum_squid.yml
 
 # include tasks to execute
 
-- include: postfix.yml
-- include: rsyslog.yml
+- import_tasks: postfix.yml
+- import_tasks: rsyslog.yml
 
-- include: canet_ca.yml
-- include: rsync_sshkey.yml
-- include: backup.yml
+- import_tasks: canet_ca.yml
+- import_tasks: rsync_sshkey.yml
+- import_tasks: backup.yml
 
-- include: myproxy.yml
-- include: hostcreds.yml
-- include: democa_tarball.yml
+- import_tasks: myproxy.yml
+- import_tasks: hostcreds.yml
+- import_tasks: democa_tarball.yml
 
 # list of enabled services
 

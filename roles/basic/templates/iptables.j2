@@ -33,6 +33,7 @@
 -A INPUT -i {{ private_ca_interface }} -s {{ private_ds_address }} -d {{ private_ca_address }} -p tcp --dport {{ private_ca_port }} -j ACCEPT
 {% endif %}{# inventory_hostname == groups.democa.0 #}
 
+# HANDLE LOCAL ADDRESSES SEPARATELY
 {% for local_net in local_nets %}
 -A INPUT -s {{ local_net }} -j LOCAL-INPUT
 {% endfor %}
