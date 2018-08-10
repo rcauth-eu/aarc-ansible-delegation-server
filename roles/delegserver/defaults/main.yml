@@ -84,6 +84,9 @@ oa4mp_server_tools_dir: "{{ oa4mp_server_dir }}/tools"
 oa4mp_server_certificates_dir: "{{ oa4mp_server_dir }}/certificates"
 
 ### DS signing keys
+### src filename
+oa4mp_server_jwk_input_file: ds.jwk
+### dest filename
 oa4mp_server_jwk_file: "{{ oa4mp_server_conf_dir }}/ds.jwk"
 
 ### Email settings for notifications about new client approval requests.

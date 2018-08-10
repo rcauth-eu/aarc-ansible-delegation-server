@@ -15,5 +15,6 @@
         Match address {{ private_ca_address }}/32
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication yes
+           PermitRootLogin yes
   notify: restart sshd
   when: not private_ca_address == private_ds_address

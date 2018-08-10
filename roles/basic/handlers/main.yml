@@ -1,5 +1,10 @@
 ---
 
+- name: restart ipset
+  service:
+    name: ipset
+    state: restarted
+
 - name: restart iptables
   service:
     name: iptables

@@ -5,9 +5,9 @@ max connections = 10
 syslog facility = daemon
 pid file = /var/run/rsyncd.pid
 
-[backuproot]
+[fsroot]
        path = {{ rsync_path }}
-       comment = {{ ansible_hostname }}:/
+       comment = {{ inventory_hostname }}:/
        read only = yes
        list = false
        auth users = backup

@@ -15,6 +15,7 @@
         Match address {{ private_ca_address }}/32
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication no
+           PermitRootLogin without-password
   register: sshd_config
   when: not private_ca_address == private_ds_address
 

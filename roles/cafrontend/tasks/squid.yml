@@ -2,6 +2,30 @@
 
 # Setup a squid proxy for the backend CA
 
+# Create squid group and user before we install squid, normally done via the RPM
+# but the preinstall fails if either the group or user already exists with a
+# different uid/gid
+
+- name: add squid group
+  group:
+    name: squid
+    system: yes
+    state: present
+
+- name: add squid user
+  user:
+    name: squid
+    group: squid
+    system: yes
+    home: /var/spool/squid
+    shell: /sbin/nologin
+    state: present
+
+- name: install squid package
+  yum:
+    name: squid
+    state: present
+
 - name: add squid config
   template:
     src: squid.conf.j2

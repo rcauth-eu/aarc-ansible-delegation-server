@@ -2,6 +2,16 @@
 
 # Iptables Setup
 
+- name: add ipset config
+  template:
+    src: ipset.j2
+    dest: "/etc/sysconfig/ipset"
+    owner: "root"
+    group: "root"
+    mode: 0600
+    backup: yes
+  notify: restart ipset
+
 - name: add iptables config
   template:
     src: iptables.j2

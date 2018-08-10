@@ -51,13 +51,6 @@ ntp_servers:
   - 1.pool.ntp.org
 
 
-### SSH Authorized users, key taken from LDAP
-### This currently requires also mkgroup-sshlpk from the nikhef_local_repo
-#authorized_uids:
-#  - admin1
-#  - admin2
-
-
 ### CA BaseDN in LDAP format, must be set to the correct value corresponding
 ### with the CA. Only used by delegserver, easier to set here since we know
 ### whether we use a demo CA. Can be based on the demoCA's O and OU set below.

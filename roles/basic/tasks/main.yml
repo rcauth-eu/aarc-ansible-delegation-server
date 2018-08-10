@@ -7,13 +7,10 @@
 
 - import_tasks: epelrepo.yml
 - import_tasks: yum.yml
-# Note: for a non-Nikhef setup, you (probably) want to skip the next
-- import_tasks: nikhefrepo.yml
 
 - import_tasks: network.yml
 - import_tasks: iptables.yml
 - import_tasks: access.yml
-- import_tasks: rootssh.yml
 - import_tasks: ntpd.yml
 
 # list of disabled services

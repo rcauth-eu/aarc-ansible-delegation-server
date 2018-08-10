@@ -16,3 +16,7 @@
   when:
     - not private_ds_interface == public_ds_interface
     - not private_ds_interface == "lo"
+
+# flush handlers in order to restart network as soon as ifcfg changes: we need
+# it to be up before we restart postfix!
+- meta: flush_handlers

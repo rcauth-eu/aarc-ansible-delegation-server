@@ -33,7 +33,7 @@
 - name: enable ssh access for backup user
   lineinfile:
     dest: "/etc/security/access.conf"
-    insertafter: '^\+ : root : ALL'
+    insertbefore: '^- : ALL : ALL'
     regexp: "^.*: {{ ca_backup_user }} :"
     line: "+ : {{ ca_backup_user }} : {{ private_ca_address }}"
     backup: yes

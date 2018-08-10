@@ -1,0 +1,52 @@
+# IPSET example
+# use with iptables like " ... -m set --match-set service_peers src  ..."
+#
+##############################################################################
+#
+# example of local network series
+#
+create service_peers4 hash:net family inet hashsize 1024 maxelem 65536
+#add service_peers4 XX.XX.XX.XX/32
+#add service_peers4 XX.XX.XX.XX/32
+#
+create service_peers6 hash:net family inet6 hashsize 1024 maxelem 65536
+#add service_peers6 XXXX:XXXX:XXXX::XX/128
+#add service_peers6 XXXX:XXXX:XXXX::XX/128
+#
+##############################################################################
+#
+# standard network series
+#
+create net_local_input6 hash:net family inet6 hashsize 1024 maxelem 65536
+{% for local_net_v6 in local_nets_v6 %}
+add net_local_input6 {{ local_net_v6 }}
+{% endfor %}
+#
+create net_local_input4 hash:net family inet hashsize 1024 maxelem 65536
+{% for local_net in local_nets %}
+add net_local_input4 {{ local_net }}
+{% endfor %}
+#
+create net_trusted_input6 hash:net family inet6 hashsize 1024 maxelem 65536
+{% for trusted_net_v6 in trusted_nets_v6 %}
+add net_trusted_input6 {{ trusted_net_v6 }}
+{% endfor %}
+#
+create net_trusted_input4 hash:net family inet hashsize 1024 maxelem 65536
+{% for trusted_net in trusted_nets %}
+add net_trusted_input4 {{ trusted_net }}
+{% endfor %}
+#
+##############################################################################
+#
+create net_backupservice6 hash:net family inet6 hashsize 1024 maxelem 65536
+{% for rsync_host_v6 in rsync_hosts_v6 %}
+add net_backupservice6 {{ rsync_host_v6 }}
+{% endfor %}
+#
+create net_backupservice4 hash:net family inet hashsize 1024 maxelem 65536
+{% for rsync_host in rsync_hosts %}
+add net_backupservice4 {{ rsync_host }}
+{% endfor %}
+#
+##############################################################################

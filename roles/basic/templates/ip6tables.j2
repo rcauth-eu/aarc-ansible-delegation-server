@@ -1,29 +1,28 @@
+#
+# Default ip6tables rules written by /root/install-scripts/iptables-service-el7.sh adapted by ansible
+# initial configuration class:
+#
 *filter
-:INPUT DROP [0:0]
-:FORWARD DROP [0:0]
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
 :OUTPUT ACCEPT [0:0]
 :RH-FW-1-INPUTV6 - [0:0]
 :LOCAL-INPUTV6 - [0:0]
 :TRUSTED-INPUTV6 - [0:0]
-
 -A INPUT -j RH-FW-1-INPUTV6
 -A FORWARD -j RH-FW-1-INPUTV6
-
-# Accept all on loopback
 -A RH-FW-1-INPUTV6 -i lo -j ACCEPT
-# Don't use IPv6 on internal net
 {% if not private_ds_interface == public_ds_interface %}
+# Don't use IPv6 on internal net
 -A RH-FW-1-INPUTV6 -i {{ private_ds_interface }} -j DROP
 {% endif %}
-
 # configuration
 -A RH-FW-1-INPUTV6 -p icmpv6 -s fe80::/10 -d fe80::/10 -j ACCEPT
 -A RH-FW-1-INPUTV6 -p icmpv6 -s fe80::/10 -d ff02::/16 -m hl --hl-eq 255 -j ACCEPT
--A RH-FW-1-INPUTV6 -p icmpv6 -s :: -d ff02::/16 -m hl --hl-eq 255 -j ACCEPT
-
+-A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type neighbor-advertisement -m hl --hl-eq 255 -j ACCEPT
+-A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type neighbor-solicitation  -m hl --hl-eq 255 -j ACCEPT
 # dhcp client config
 -A RH-FW-1-INPUTV6 -p udp -s fe80::/10 -d fe80::/10 --dport 546 -j ACCEPT
-
 # path discovery
 -A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
 -A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
@@ -31,43 +30,49 @@
 -A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type parameter-problem -j ACCEPT
 -A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type echo-request -j ACCEPT
 -A RH-FW-1-INPUTV6 -p icmpv6 --icmpv6-type echo-reply -j ACCEPT
-
+# service peers from anywhere can ssh in for sync (and more, to be defined)
+-A RH-FW-1-INPUTV6 -m set --match-set service_peers6 src -p tcp --dport 22 -m state --state NEW -j LOG --log-prefix "permit-tcpv6-ssh-in: "
+-A RH-FW-1-INPUTV6 -m set --match-set service_peers6 src -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+# ssh access from trusted nets should not be rate-limited
+-A RH-FW-1-INPUTV6 -m set --match-set net_trusted_input6 src -p tcp --dport 22 -m state --state NEW -j LOG --log-prefix "permit-tcpv6-ssh-in: "
+-A RH-FW-1-INPUTV6 -m set --match-set net_trusted_input6 src -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
 # ssh scanning block
 -A RH-FW-1-INPUTV6 -p tcp -m state --state NEW --dport 22 -m recent --name sshattack6 --set
 -A RH-FW-1-INPUTV6 -p tcp --dport 22 -m state --state NEW -m recent --name sshattack6 --rcheck --seconds 30 --hitcount 4 -j LOG --log-prefix "SSH REJECT V6: "
 -A RH-FW-1-INPUTV6 -p tcp --dport 22 -m state --state NEW -m recent --name sshattack6 --rcheck --seconds 30 --hitcount 4 -j REJECT --reject-with tcp-reset
 # related goes through
 -A RH-FW-1-INPUTV6 -m state --state ESTABLISHED,RELATED -j ACCEPT
-
+#
 # Global allows for hosted services
 #-A RH-FW-1-INPUTV6 -m tcp -p tcp --dport 80 -j ACCEPT
 -A RH-FW-1-INPUTV6 -m tcp -p tcp --dport 443 -j ACCEPT
-
-# Split between local vs. foreign
-{% for local_net_v6 in local_nets_v6 %}
--A RH-FW-1-INPUTV6 -s {{ local_net_v6 }} -j LOCAL-INPUTV6
-{% endfor %}
+#
+# Split between LOCAL & TRUSTED vs. foreign
+-A RH-FW-1-INPUTV6 -m set --match-set net_local_input6 src -j LOCAL-INPUTV6
+#
 # Further remote access is rejected
 -A RH-FW-1-INPUTV6 -j DROP
-
-# LOCAL rules
-
-# DHCPv6 replies, DNS replies
--A LOCAL-INPUTV6 -p udp --dport 546 -j ACCEPT
--A LOCAL-INPUTV6 -p udp --sport  53 -j ACCEPT
+#
+# ----------------------------------------------------------------------------
+# LOCAL all-inclusive rules
+#
+# DHCPv6 replies
+-A LOCAL-INPUTV6 -m set --match-set net_local_input6 src -p udp --dport 546 -j ACCEPT
+# DNS
+-A LOCAL-INPUTV6 -m set --match-set net_local_input6 src -p udp --sport 53 -j ACCEPT
+#
+# backup service via rsync
+-A LOCAL-INPUTV6 -m set --match-set net_backupservice6 src -m state --state NEW -m tcp -p tcp --dport 873 -j ACCEPT
+#
+# specific additions for trusted traffic or drop
 -A LOCAL-INPUTV6 -p icmpv6 -j ACCEPT
-
-# Split between local vs. trusted
-{% for trusted_net_v6 in trusted_nets_v6 %}
--A LOCAL-INPUTV6 -s {{ trusted_net_v6 }} -j TRUSTED-INPUTV6
-{% endfor %}
+-A LOCAL-INPUTV6 -m set --match-set net_trusted_input6 src -j TRUSTED-INPUTV6
 -A LOCAL-INPUTV6 -j REJECT --reject-with icmp6-adm-prohibited
-
-# TRUSTED rules
-
-# SSH Access
+#
+# ----------------------------------------------------------------------------
+# Trusted networks here
 -A TRUSTED-INPUTV6 -p tcp --dport 22 --syn -j LOG --log-prefix permit-tcpv6-ssh-in: --log-level info
 -A TRUSTED-INPUTV6 -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
 -A TRUSTED-INPUTV6 -j REJECT --reject-with icmp6-adm-prohibited
-
+#
 COMMIT

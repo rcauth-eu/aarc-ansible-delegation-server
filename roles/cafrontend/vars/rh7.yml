@@ -12,4 +12,3 @@ enabled_services:
 extra_packages:
  - postfix
  - dnsmasq
- - squid

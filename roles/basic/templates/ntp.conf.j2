@@ -21,3 +21,9 @@ restrict {{ private_ca_address }} nomodify notrap nopeer
 {% endif %}
 restrict 127.0.0.1 
 restrict -6 ::1
+
+# Disable the monitoring facility to prevent amplification attacks using ntpdc
+# monlist command when default restrict does not include the noquery flag. See
+# CVE-2013-5211 for more details.
+# Note: Monitoring will not be disabled with the limited restriction flag.
+disable monitor

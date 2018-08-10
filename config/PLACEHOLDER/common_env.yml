@@ -36,6 +36,9 @@ private_ca_address: 127.0.0.1
 #rsync_path: /
 #rsync_hosts:
 #   - 1.2.3.8/32
+#
+#rsync_hosts_v6:
+#   - 1234::1/128
 
 
 ### NTP Server
