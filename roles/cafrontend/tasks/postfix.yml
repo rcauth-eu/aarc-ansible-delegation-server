@@ -37,6 +37,8 @@
        #myorigin = $mydomain
        # first process the /etc/aliases
        local_recipient_maps = $alias_maps
+       # rewrite ca.canet sender
+       sender_canonical_maps = regexp:/etc/postfix/sender_canonical
        # catch-all for (still) unknown local recipients
        luser_relay = {{ luser_relay }}
        # local mail is handled by smtp_server
@@ -45,6 +47,8 @@
        relayhost = [{{ smtp_server }}]
        mydestination_canet = {{ postfix_mydestinations }}
        append_dot_mydomain = no
+       # the sender_canonical map removes the ca.canet, here we add our FQDN
+       append_at_myorigin = yes
   register: forward_config
 
 - name: make mail directory sticky-world writeable
@@ -60,6 +64,19 @@
     state: touch
     group: nobody
     mode: 0660
+
+- name: set rewrite rule for senders from backend CA
+  lineinfile:
+     dest: "/etc/postfix/sender_canonical"
+     regexp: ".*ca.canet"
+     # we rewrite anything at @ca.canet to just the name, append_at_myorigin
+     # will then fix it to <user>@<fqdn>
+     line: '/^(.*)@ca.canet/ ${1}'
+     owner: root
+     group: root
+     mode: 0644
+     create: yes
+     backup: yes
 
 - name: set root alias for mails
   lineinfile:
