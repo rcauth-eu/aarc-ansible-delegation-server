@@ -40,13 +40,17 @@ add net_trusted_input4 {{ trusted_net }}
 ##############################################################################
 #
 create net_backupservice6 hash:net family inet6 hashsize 1024 maxelem 65536
+{% if rsync_hosts_v6 is defined %}
 {% for rsync_host_v6 in rsync_hosts_v6 %}
 add net_backupservice6 {{ rsync_host_v6 }}
 {% endfor %}
+{% endif %}
 #
 create net_backupservice4 hash:net family inet hashsize 1024 maxelem 65536
+{% if rsync_hosts is defined %}
 {% for rsync_host in rsync_hosts %}
 add net_backupservice4 {{ rsync_host }}
 {% endfor %}
+{% endif %}
 #
 ##############################################################################

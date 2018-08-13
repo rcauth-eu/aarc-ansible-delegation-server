@@ -21,15 +21,14 @@ general_packages:
 
 enabled_services:
   - ntpd
+  - ipset
   - iptables
   - ip6tables
-  - ipset
 
 disabled_services:
   - NetworkManager
   - wpa_supplicant
   - firewalld
-  - chronyd
 
 ### additional repository information
 

@@ -1,5 +1,22 @@
 ---
 
+## When chrony is installed it needs to be disabled
+#- name: check whether chrony is installed
+#  yum:
+#    list: chrony.x86_64
+#  register: chrony_rpm
+#
+#- name: disable chronyd
+#  service: name=chronyd state=stopped enabled=no
+#  when: chrony_rpm.results[0].yumstate == 'installed'
+
+# Alternatively, from 2.5 onwards, we can check existing services
+- service_facts:
+
+- name: disable chronyd
+  service: name=chronyd state=stopped enabled=no
+  when: "'chronyd.service' in ansible_facts.services"
+
 # NTP Setup
 
 - name: add ntp config

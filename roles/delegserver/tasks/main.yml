@@ -22,7 +22,7 @@
 ### config for DS itself
 
 - import_tasks: rsyncd.yml
-  when: rsync_hosts is defined
+  when: (rsync_hosts is defined) or (rsync_hosts_v6 is defined)
 - import_tasks: mysql-backup.yml
 - import_tasks: oa4mp-server.yml
 - import_tasks: webroot.yml
