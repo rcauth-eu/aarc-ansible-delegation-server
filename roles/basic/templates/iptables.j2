@@ -28,6 +28,8 @@
 -A RH-FW-1-INPUT -p tcp --dport 22 -m state --state NEW -m recent --name sshattack --rcheck --seconds 30 --hitcount 4 -j REJECT --reject-with tcp-reset
 # related goes through
 -A RH-FW-1-INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+#
+{% if inventory_hostname == groups.delegserver.0 %}
 # public services that may go through
 #-A RH-FW-1-INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
 -A RH-FW-1-INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
@@ -38,6 +40,12 @@
 -A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 3128 -j ACCEPT
 -A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 53 -j ACCEPT
 -A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 123 -j ACCEPT
+{% endif %}{# inventory_hostname == groups.delegserver.0 #}
+#
+{% if inventory_hostname == groups.democa.0 %}
+# Towards DS
+-A RH-FW-1-INPUT -i {{ private_ca_interface }} -s {{ private_ds_address }} -d {{ private_ca_address }} -p tcp --dport {{ private_ca_port }} -j ACCEPT
+{% endif %}{# inventory_hostname == groups.democa.0 #}
 #
 # split between local and foreign
 -A RH-FW-1-INPUT -m set --match-set net_local_input4 src -j LOCAL-INPUT
@@ -63,9 +71,27 @@
 # ############## OUTPUT FILTER ##################################
 #
 -A OUTPUT-FILTER -o lo -j ACCEPT
+#
+{% if inventory_hostname == groups.delegserver.0 %}
 -A OUTPUT-FILTER -o {{ public_ds_interface }} -j ACCEPT
+# Private network towards backend CA
 -A OUTPUT-FILTER -o {{ private_ds_interface }} -m state --state RELATED,ESTABLISHED -j ACCEPT
 -A OUTPUT-FILTER -o {{ private_ds_interface }} -s {{ private_ds_address }} -d {{ private_ca_address }} -p tcp --dport {{ private_ca_port }} -j ACCEPT
+{% endif %}{# inventory_hostname == groups.delegserver.0 #}
+#
+{% if inventory_hostname == groups.democa.0 %}
+-A OUTPUT-FILTER -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --sport {{ private_ca_port }} -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 22 -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 25 -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 3128 -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 53 -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 123 -j ACCEPT
+# Next rules are ok since it's a demoCA
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -p tcp --sport 22 -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -p tcp --dport 443 -j ACCEPT
+{% endif %}{# inventory_hostname == groups.democa.0 #}
+#
 -A OUTPUT-FILTER -m limit --limit 2/min -j LOG --log-uid --log-prefix "iptables:OUTPUT: "
 -A OUTPUT-FILTER -j DROP
 #

@@ -12,7 +12,7 @@
 -A INPUT -j RH-FW-1-INPUTV6
 -A FORWARD -j RH-FW-1-INPUTV6
 -A RH-FW-1-INPUTV6 -i lo -j ACCEPT
-{% if not private_ds_interface == public_ds_interface %}
+{% if (inventory_hostname == groups.delegserver.0) and (not private_ds_interface == public_ds_interface) %}
 # Don't use IPv6 on internal net
 -A RH-FW-1-INPUTV6 -i {{ private_ds_interface }} -j DROP
 {% endif %}
@@ -43,9 +43,11 @@
 # related goes through
 -A RH-FW-1-INPUTV6 -m state --state ESTABLISHED,RELATED -j ACCEPT
 #
+{% if inventory_hostname == groups.delegserver.0 %}
 # Global allows for hosted services
 #-A RH-FW-1-INPUTV6 -m tcp -p tcp --dport 80 -j ACCEPT
 -A RH-FW-1-INPUTV6 -m tcp -p tcp --dport 443 -j ACCEPT
+{% endif %}
 #
 # Split between LOCAL & TRUSTED vs. foreign
 -A RH-FW-1-INPUTV6 -m set --match-set net_local_input6 src -j LOCAL-INPUTV6
