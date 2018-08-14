@@ -34,6 +34,12 @@
      insertafter: EOF
      backup: yes
      block: |
+       #
+       # This ensures that ONLY the local alias map is used, but all mail to
+       # 'local' users is automatically forwarded to the main mail server
+       #
+       # setting 'myorigin' results in an unconditional mail forward of all mail
+       #
        #myorigin = $mydomain
        # first process the /etc/aliases
        local_recipient_maps = $alias_maps
