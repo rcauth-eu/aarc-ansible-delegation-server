@@ -16,3 +16,17 @@
     name: "{{ item }}"
     state: present
   with_items: "{{ extra_packages }}"
+
+# disable yum-cron auto_update (when yum-cron is there)
+- name: check whether yum-cron is installed
+  yum:
+    list: yum-cron
+  register: yum_cron_rpm
+
+- name: disable auto update
+  lineinfile:
+    dest: /etc/yum/yum-cron.conf
+    regexp: '^apply_updates\s+=.*$'
+    line: "apply_updates = no"
+    backup: yes
+  when: yum_cron_rpm.results | selectattr("yumstate", "equalto", "installed") | list | length != 0
