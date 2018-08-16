@@ -16,3 +16,13 @@
      dest: /etc/cron.hourly/ca_checker.cron
      owner: root
      state: link
+
+# also regularly ping CA machine to prevent ARP problems
+
+- name: add cron job to ping CA
+  cron:
+    name: "ping CA every 4 minutes to remember MAC"
+    cron_file: ping_ca
+    user: root
+    minute: "*/4"
+    job: "/usr/bin/ping -c1 -w1 {{ private_ca_fqdn }} > /dev/null 2>&1"

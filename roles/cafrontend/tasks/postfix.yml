@@ -43,7 +43,7 @@
        #myorigin = $mydomain
        # first process the /etc/aliases
        local_recipient_maps = $alias_maps
-       # rewrite ca.canet sender
+       # rewrite {{ private_ca_fqdn }} sender
        sender_canonical_maps = regexp:/etc/postfix/sender_canonical
        # catch-all for (still) unknown local recipients
        luser_relay = {{ luser_relay }}
@@ -53,7 +53,7 @@
        relayhost = [{{ smtp_server }}]
        mydestination_canet = {{ postfix_mydestinations }}
        append_dot_mydomain = no
-       # the sender_canonical map removes the ca.canet, here we add our FQDN
+       # the sender_canonical map removes the {{ private_ca_fqdn }}, here we add our FQDN
        append_at_myorigin = yes
   register: forward_config
 
@@ -74,10 +74,10 @@
 - name: set rewrite rule for senders from backend CA
   lineinfile:
      dest: "/etc/postfix/sender_canonical"
-     regexp: ".*ca.canet"
-     # we rewrite anything at @ca.canet to just the name, append_at_myorigin
+     regexp: ".*{{ private_ca_fqdn }}"
+     # we rewrite anything at @{{ private_ca_fqdn }} to just the name, append_at_myorigin
      # will then fix it to <user>@<fqdn>
-     line: '/^(.*)@ca.canet/ ${1}'
+     line: '/^(.*)@{{ private_ca_fqdn }}/ ${1}'
      owner: root
      group: root
      mode: 0644
