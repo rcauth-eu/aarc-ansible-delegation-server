@@ -86,22 +86,19 @@
        </context-param>
   notify: restart tomcat
 
-# add javax.mail jar.
-# Note: the oauth2.war currently also ships a javax.mail.jar
-# Installing it here too breaks ("javax.mail.Session cannot be cast to
-# javax.mail.Session"), we must therefore skip it here.
-# Note: we therefore also cannot use the RPM for javamail.
+# add javax.mail jar
+# Note: we could use the RPM for javamail, but is ancient and only for CentOS7
 
-#- name: download javax.mail jar
-#  get_url:
-#    url: "{{ javax_mail_url }}"
-#    dest: "{{ catalina_home }}/lib/javax.mail.jar"
-#- name: set permission on javax.mail
-#  file:
-#    path: "{{ catalina_home }}/lib/javax.mail.jar"
-#    owner: root
-#    group: root
-#    mode: 0644
+- name: download javax.mail jar
+  get_url:
+    url: "{{ javax_mail_url }}"
+    dest: "{{ catalina_home }}/lib/javax.mail.jar"
+- name: set permission on javax.mail
+  file:
+    path: "{{ catalina_home }}/lib/javax.mail.jar"
+    owner: root
+    group: root
+    mode: 0644
 
 # add mail resource to context.xml
 
