@@ -1,7 +1,7 @@
 ---
 ### general packages that should be present
 
-general_packages: 
+general_packages:
   - libselinux-python
   - net-tools
   - bind-utils
@@ -17,7 +17,7 @@ general_packages:
   - smartmontools
   - ipmitool
 
-### list of enabled and disabled services 
+### list of enabled and disabled services
 
 enabled_services:
   - ntpd

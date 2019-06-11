@@ -31,5 +31,5 @@
   notify: restart network
   with_items: "{{ interface_scripts }}"
 
-# flush handlers in order to restart network as soon as ifcfg changes 
+# flush handlers in order to restart network as soon as ifcfg changes
 - meta: flush_handlers

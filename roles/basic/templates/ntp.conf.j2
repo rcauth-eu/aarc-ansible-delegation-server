@@ -19,7 +19,7 @@ restrict -6 default nomodify notrap nopeer noquery
 {% if private_ca_address is defined %}
 restrict {{ private_ca_address }} nomodify notrap nopeer
 {% endif %}
-restrict 127.0.0.1 
+restrict 127.0.0.1
 restrict -6 ::1
 
 # Disable the monitoring facility to prevent amplification attacks using ntpdc

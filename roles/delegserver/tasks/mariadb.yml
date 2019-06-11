@@ -32,13 +32,13 @@
 # check OA4MP Server DB
 
 - name: create OA4MP Server DB
-  mysql_db: 
-    name: "{{ oa4mp_server_db }}" 
+  mysql_db:
+    name: "{{ oa4mp_server_db }}"
     state: present
     login_user: root
     login_password: "{{ mariadb_root_password }}"
   register: server_db
-  when: mariadb_root_password is defined 
+  when: mariadb_root_password is defined
 
 - name: update mariadb oa4mp user account
   mysql_user:
@@ -54,22 +54,22 @@
   when: mariadb_root_password is defined
 
 - name: copy oa4mp server sql script
-  template: 
+  template:
     src: oa4mp-server-mysql.sql.j2
     dest: /tmp/oa4mp-server-mysql.sql
   when: server_db is defined and server_db.changed
 
 - name: execute oa4mp server sql script
-  mysql_db: 
+  mysql_db:
     state: import
-    name: all 
+    name: all
     target: /tmp/oa4mp-server-mysql.sql
     login_user: root
     login_password: "{{ mariadb_root_password }}"
   when: server_db is defined and server_db.changed
 
 - name: remove oa4mp server sql script
-  file: 
+  file:
     path: /tmp/oa4mp-server-mysql.sql
     state: absent
   when: server_db is defined and server_db.changed

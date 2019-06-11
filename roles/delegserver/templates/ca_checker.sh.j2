@@ -1,46 +1,41 @@
 #!/bin/sh
 
 send_mail() {
-
-        # send mail about the state change
-        echo -e "OpenSSL s_client output: \n\n${1}" | \
-             mailx -s "ca_checker state has changed" {{ contact }}
+    # send mail about the state change
+    echo -e "OpenSSL s_client output: \n\n${1}" | \
+         mailx -s "ca_checker state has changed" {{ contact }}
 }
 
 STATE_DIR=/var/cache/ca_checker
 STATE_FILE=${STATE_DIR}/state
 
-# check the existance of the state dir 
+# check the existance of the state dir
 if [ ! -d ${STATE_DIR} ]; then
-	mkdir -m 700 ${STATE_DIR}
+    mkdir -m 700 ${STATE_DIR}
 fi
 
 # excute openssl command
 OUTPUT=$( (echo "0" ; echo -e "VERSION=MYPROXYv2\nCOMMAND=CA TEST") | \
-	  openssl s_client -CApath {{oa4mp_server_certificates_dir}} \
-  	        -connect {{ private_ca_fqdn }}:{{ private_ca_port }} \
-        	-quiet -no_ign_eof -prexit 2>&1)
+    openssl s_client -CApath {{oa4mp_server_certificates_dir}} \
+        -connect {{ private_ca_fqdn }}:{{ private_ca_port }} \
+        -quiet -no_ign_eof -prexit 2>&1)
 OPENSSL_RET=$?
 
 # evaluate openssl results
 if [ -w ${STATE_FILE} ]; then
-
-        # compare existing state with output
-        STATE=$(cat ${STATE_FILE})
-        if [ "${STATE}" != "${OUTPUT}" ]; then
-                send_mail "${OUTPUT}"
-                echo "${OUTPUT}" > ${STATE_FILE}
-        fi
-
-else
-
-        # send mail if this is the first run and CA is down
-        if [ ${OPENSSL_RET} -ne 0 ]; then
-                send_mail "${OUTPUT}"
-        fi
-
-        # save state if it does not exist
+    # compare existing state with output
+    STATE=$(cat ${STATE_FILE})
+    if [ "${STATE}" != "${OUTPUT}" ]; then
+        send_mail "${OUTPUT}"
         echo "${OUTPUT}" > ${STATE_FILE}
+    fi
+else
+    # send mail if this is the first run and CA is down
+    if [ ${OPENSSL_RET} -ne 0 ]; then
+        send_mail "${OUTPUT}"
+    fi
 
+    # save state if it does not exist
+    echo "${OUTPUT}" > ${STATE_FILE}
 fi
 

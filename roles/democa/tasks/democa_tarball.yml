@@ -31,7 +31,7 @@
     owner: root
     group: root
     remote_src: yes
-  
+
 - name: create symlink for demoCA's signing policy
   file:
     src: "{{ democa_name }}.signing_policy"

@@ -36,7 +36,7 @@ shib_entity_id: "https://{{ inventory_hostname }}"
 shib_idp_id: "https://ipd.example.com/idp/shibboleth"
 shib_idp_metadata: "https://ipd.example.com/idp/shibboleth/metadata"
 
-shib_meta_name: "Delegation Service" 
+shib_meta_name: "Delegation Service"
 shib_meta_desc: "Delegation Service Description"
 shib_meta_url: "https://wiki.organization.com"
 shib_meta_org: "Organization"

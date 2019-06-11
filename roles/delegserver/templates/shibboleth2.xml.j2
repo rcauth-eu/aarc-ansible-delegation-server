@@ -1,7 +1,7 @@
 <SPConfig xmlns="urn:mace:shibboleth:3.0:native:sp:config"
     xmlns:conf="urn:mace:shibboleth:3.0:native:sp:config"
     xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
-    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"    
+    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
     xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
     xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui"
     xmlns:mdattr="urn:oasis:names:tc:SAML:metadata:attribute"
@@ -16,7 +16,7 @@
     To customize behavior for specific resources on Apache, and to link vhosts or
     resources to ApplicationOverride settings below, use web server options/commands.
     See https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPConfigurationElements for help.
-    
+
     For examples with the RequestMap XML syntax instead, see the example-shibboleth2.xml
     file, and the https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPRequestMapHowTo topic.
     -->
@@ -24,7 +24,7 @@
     <!-- The ApplicationDefaults element is where most of Shibboleth's SAML bits are defined. -->
     <ApplicationDefaults entityID="{{ shib_entity_id }}"
                          REMOTE_USER="epuid eppn eptid targeted-id persistent-id"
-			 metadataAttributePrefix="Meta-">
+                         metadataAttributePrefix="Meta-">
 
         <!--
         Controls session lifetimes, address checks, cookie handling, and the protocol handlers.
@@ -37,7 +37,7 @@
         -->
         <Sessions lifetime="28800" timeout="3600" relayState="ss:mem"
                   checkAddress="false" handlerSSL="true" cookieProps="https"
-		  exportLocation="https://localhost/Shibboleth.sso/GetAssertion" exportACL="127.0.0.1 ::1">
+                  exportLocation="https://localhost/Shibboleth.sso/GetAssertion" exportACL="127.0.0.1 ::1">
 
             <!--
             Configures SSO for a default IdP. To allow for >1 IdP, remove
@@ -51,7 +51,7 @@
 
             <!-- SAML and local-only logout. -->
             <Logout>SAML2 Local</Logout>
-            
+
             <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
             <Handler type="MetadataGenerator" Location="/Metadata" signing="false">
               <mdui:UIInfo>
@@ -138,15 +138,15 @@
         <Errors supportContact="root@localhost"
             helpLocation="/about.html"
             styleSheet="/shibboleth-sp/main.css"/>
-        
+
         <!-- Example of remotely supplied batch of signed metadata. -->
         <!--
         <MetadataProvider type="XML" validate="true"
-	      url="http://federation.org/federation-metadata.xml"
+              url="http://federation.org/federation-metadata.xml"
               backingFilePath="federation-metadata.xml" reloadInterval="7200">
             <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
             <MetadataFilter type="Signature" certificate="fedsigner.pem"/>
-            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true" 
+            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true"
               attributeName="http://macedir.org/entity-category"
               attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
               attributeValue="http://refeds.org/category/hide-from-discovery" />
@@ -158,20 +158,20 @@
                           backingFilePath="idp-metadata.xml"
                           reloadInterval="7200">
         </MetadataProvider>
- 
+
         <!-- Example of locally maintained metadata. -->
         <!--
         <MetadataProvider type="XML" validate="true" file="partner-metadata.xml"/>
         -->
 
         <!-- Map to extract attributes from SAML assertions. -->
-	<AttributeExtractor type="Chaining">
-        	<AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
-		<!-- Extract the md:organizationDisplayName from the IdP metadata -->
-		<AttributeExtractor type="Metadata" OrganizationDisplayName="orgDisplayName"/>
-                <!-- Extract the entity ID of the REAL authenticating authority (not the RCAuth WAYF) -->
-                <AttributeExtractor type="Assertion" AuthenticatingAuthority="Shib-Authenticating-Authority"/>
-	</AttributeExtractor>        
+        <AttributeExtractor type="Chaining">
+            <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
+            <!-- Extract the md:organizationDisplayName from the IdP metadata -->
+            <AttributeExtractor type="Metadata" OrganizationDisplayName="orgDisplayName"/>
+            <!-- Extract the entity ID of the REAL authenticating authority (not the RCAuth WAYF) -->
+            <AttributeExtractor type="Assertion" AuthenticatingAuthority="Shib-Authenticating-Authority"/>
+        </AttributeExtractor>
 
         <!-- Use a SAML query if no attributes are supplied during SSO. -->
         <AttributeResolver type="Query" subjectMatch="true"/>
@@ -187,7 +187,7 @@
         the https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPApplicationOverride topic).
         Resource requests are mapped by web server commands, or the RequestMapper, to an
         applicationId setting.
-        
+
         Example of a second application (for a second vhost) that has a different entityID.
         Resources on the vhost would map to an applicationId of "admin":
         -->
@@ -195,7 +195,7 @@
         <ApplicationOverride id="admin" entityID="https://admin.example.org/shibboleth"/>
         -->
     </ApplicationDefaults>
-    
+
     <!-- Policies that determine how to process and authenticate runtime messages. -->
     <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
 

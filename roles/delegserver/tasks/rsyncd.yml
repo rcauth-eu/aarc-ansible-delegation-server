@@ -8,7 +8,7 @@
 
 # Setup rsync daemon for backups to outside
 
-- name: configure rsyncd 
+- name: configure rsyncd
   template:
     src: rsyncd.conf.j2
     dest: "/etc/rsyncd.conf"

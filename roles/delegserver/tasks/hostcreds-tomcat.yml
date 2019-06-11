@@ -6,12 +6,12 @@
 # user and to have /var/www/server/conf
 
 - name: look for private credentials archive
-  stat: 
+  stat:
     path: "{{ private_dscreds_tarball }}"
   register: priv_creds
 
 - name: create private credential temp dir
-  tempfile: 
+  tempfile:
     state: directory
     prefix: private_creds.
     path: /root
@@ -23,7 +23,7 @@
     src: "{{ private_dscreds_tarball }}"
     remote_src: true
     dest: "{{ private_creds_tmp.path }}"
-  when: priv_creds.stat.exists 
+  when: priv_creds.stat.exists
 
 - name: create private trusted certificates dir and set attributes
   file:
@@ -55,5 +55,5 @@
     state: absent
   with_items:
 #    - "{{ private_dscreds_tarball }}"
-    - "{{ private_creds_tmp.path }}" 
+    - "{{ private_creds_tmp.path }}"
   when: priv_creds.stat.exists

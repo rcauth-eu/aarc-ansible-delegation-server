@@ -2,7 +2,7 @@
 
 # Disable SELinux (Shibboleth SP requirement)
 
-- name: disable selinux 
+- name: disable selinux
   selinux: state=disabled
 
 # install shibboleth
@@ -23,7 +23,7 @@
     group: "root"
     mode: 0644
     backup: yes
-  notify: 
+  notify:
     - restart shibd
     - restart httpd
 
@@ -35,7 +35,7 @@
     group: "root"
     mode: 0644
     backup: yes
-  notify: 
+  notify:
     - restart shibd
     - restart httpd
 
@@ -47,7 +47,7 @@
     group: "root"
     mode: 0644
     backup: yes
-  notify: 
+  notify:
     - restart shibd
     - restart httpd
 
@@ -60,7 +60,7 @@
      group: root
      mode: 0644
      backup: yes
-  notify: 
+  notify:
     - restart shibd
     - restart httpd
 

@@ -17,8 +17,8 @@
 
 # Start PostgreSQL Server
 
-- name: initialize db service 
-  command: /usr/bin/initdb -D /var/lib/pgsql/data/ 
+- name: initialize db service
+  command: /usr/bin/initdb -D /var/lib/pgsql/data/
   become: yes
   become_user: postgres
   when:  postgresql_installation.changed
@@ -38,21 +38,21 @@
 # check OA4MP Server DB
 
 - name: Create OA4MP Server DB
-  postgresql_db: 
-    name: "{{ oa4mp_server_db }}" 
+  postgresql_db:
+    name: "{{ oa4mp_server_db }}"
     state: present
 #    login_user: root
 #    login_password: "{{ mariadb_root_password }}"
   register: server_db
 
 - name: copy oa4mp server postgresql script
-  template: 
+  template:
     src: oa4mp-server-postgrsel.sql.j2
     dest: /tmp/oa4mp-server-postgrsql.sql
   when: server_db.changed
 
 - name: execute oa4mp server sql script
-  command: psql -f /tmp/oa4mp-server-postgrsql.sql 
+  command: psql -f /tmp/oa4mp-server-postgrsql.sql
   become: yes
   become_user: postgres
   when: server_db.changed

@@ -39,14 +39,14 @@
         <scopes handler="eu.rcauth.delegserver.oauth2.DSDynamicClaimsSourceImpl">
             <scope name="edu.uiuc.ncsa.myproxy.getcert">
                 <claim name="cert_subject_dn">X509_CERT_SUBJECT</claim>
-            </scope> 
+            </scope>
             <scope name="email">
                 <claim name="email">mail</claim>
             </scope>
             <scope name="openid">
-                <!-- 
-                     The 'sub' claim is always sent and it defaults to whatever the 
-                     authorizationServlet returns as a username 
+                <!--
+                     The 'sub' claim is always sent and it defaults to whatever the
+                     authorizationServlet returns as a username
                 -->
                 <!-- <claim name="sub">REMOTE_USER</claim> -->
             </scope>
@@ -112,9 +112,9 @@
 
 {% else %}
 
-        <{{ oa4mp_server_db_conf }} username="{{ oa4mp_server_db_user }}" 
-                password="{{ oa4mp_server_db_pw }}" 
-                database="{{ oa4mp_server_db }}" 
+        <{{ oa4mp_server_db_conf }} username="{{ oa4mp_server_db_user }}"
+                password="{{ oa4mp_server_db_pw }}"
+                database="{{ oa4mp_server_db }}"
                 schema="{{ oa4mp_server_db }}" >
             <transactions/>
             <clients/>

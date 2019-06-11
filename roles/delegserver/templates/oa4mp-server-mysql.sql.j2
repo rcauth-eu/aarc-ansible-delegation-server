@@ -1,6 +1,6 @@
 /*
    This script will create the tables for a basic oa4mp install. Since MySQL has *no* varaible
-   support, everything is hard-coded. if you want something other than the default names and 
+   support, everything is hard-coded. if you want something other than the default names and
    then edit the file.
 */
 
@@ -91,24 +91,24 @@ COMMIT;
  Now to grant restricted access. The  tables have to exist before this step
 */
 
-GRANT ALL ON {{ oa4mp_server_db }}.client_approvals 
-	TO '{{ oa4mp_server_db_user }}'@'localhost' 
-	IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON {{ oa4mp_server_db }}.client_approvals
+    TO '{{ oa4mp_server_db_user }}'@'localhost'
+    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.clients 
-	TO '{{ oa4mp_server_db_user }}'@'localhost' 
-	IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON {{ oa4mp_server_db }}.clients
+    TO '{{ oa4mp_server_db_user }}'@'localhost'
+    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.callbacks 
-	TO '{{ oa4mp_server_db_user }}'@'localhost' 
-	IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON {{ oa4mp_server_db }}.callbacks
+    TO '{{ oa4mp_server_db_user }}'@'localhost'
+    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.transactions 
-	TO '{{ oa4mp_server_db_user }}'@'localhost' 
-	IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON {{ oa4mp_server_db }}.transactions
+    TO '{{ oa4mp_server_db_user }}'@'localhost'
+    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.trace_records 
-        TO '{{ oa4mp_server_db_user }}'@'localhost' 
-        IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON {{ oa4mp_server_db }}.trace_records
+    TO '{{ oa4mp_server_db_user }}'@'localhost'
+    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
 COMMIT;

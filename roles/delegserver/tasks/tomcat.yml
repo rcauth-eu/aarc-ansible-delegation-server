@@ -20,7 +20,7 @@
 
 # configurations
 
-# close unused ports?  
+# close unused ports?
 
 # set tomcatAuthentication="false" so REMOTE_USER will be taken over from apache
 # and only listen on localhost
@@ -112,9 +112,9 @@
     owner: "{{ tomcat_user }}"
     group: "{{ tomcat_user }}"
     backup: yes
-  notify: restart tomcat 
+  notify: restart tomcat
 
-# configure the private X509_CERT_DIR as an environmental variable 
+# configure the private X509_CERT_DIR as an environmental variable
 
 - name: set private X509_CERT_DIR variable
   lineinfile:

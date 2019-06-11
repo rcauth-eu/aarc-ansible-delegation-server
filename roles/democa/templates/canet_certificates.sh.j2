@@ -37,11 +37,11 @@ RANDFILE                = /dev/urandom
 HOST = ""
 
 [ ca ]
-default_ca	 = root_ca
+default_ca       = root_ca
 
 [ root_ca ]
-dir		 = $CA
-database	 = \$dir/index.txt
+dir              = $CA
+database         = \$dir/index.txt
 serial           = \$dir/serial
 new_certs_dir    = \$dir/newcerts
 certificate      = \$dir/cacert.pem
@@ -50,7 +50,7 @@ default_days     = 36525
 default_crl_days = 36525
 default_md       = sha256
 prompt           = no
-x509_extensions	 = user_extensions
+x509_extensions  = user_extensions
 policy           = policy_match
 
 [ policy_match ]
@@ -63,7 +63,7 @@ default_bits            = 4096
 utf8                    = yes
 string_mask             = utf8only
 default_md              = sha256
-default_days		= 36525
+default_days            = 36525
 distinguished_name      = req_distinguished_name
 x509_extensions         = ca_extensions
 
@@ -103,20 +103,20 @@ createcert() {
     export HOST=$1
 
     mkdir -p ${CA}/${HOST}/certificates
-    # Create request 
+# Create request
     openssl req -new -batch -nodes -newkey rsa \
-	-keyout ${CA}/${HOST}/hostkey.pem -out ${CA}/certreq.pem \
-	-subj "${BASEDN}/CN=$HOST"
+        -keyout ${CA}/${HOST}/hostkey.pem -out ${CA}/certreq.pem \
+        -subj "${BASEDN}/CN=$HOST"
     if [ $? -ne 0 ];then
-	echo "Making request failed, check ${CA}" >&2
-	exit 1
+        echo "Making request failed, check ${CA}" >&2
+        exit 1
     fi
-    # Sign certificate
+# Sign certificate
     openssl ca -batch -notext -out ${CA}/${HOST}/hostcert.pem \
-	-in ${CA}/certreq.pem -preserveDN
+        -in ${CA}/certreq.pem -preserveDN
     if [ $? -ne 0 ];then
-	echo "Signing certificate failed, check ${CA}" >&2
-	exit 1
+        echo "Signing certificate failed, check ${CA}" >&2
+        exit 1
     fi
     # Remove request
     rm ${CA}/certreq.pem
@@ -138,8 +138,8 @@ EOF
     # Make a tarball
     tarball=${CA}/${HOST}.tgz
     tar -zcf ${tarball} -C ${CA}/$HOST certificates hostcert.pem hostkey.pem || {
-	echo "Creating tarball ${tarball} failed" >&2
-	exit 1
+        echo "Creating tarball ${tarball} failed" >&2
+        exit 1
     }
 
     # Remove all but the hostcert itself

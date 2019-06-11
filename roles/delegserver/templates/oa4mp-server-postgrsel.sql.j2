@@ -29,11 +29,11 @@ DROP SCHEMA IF EXISTS :oa4mpSchema CASCADE;
 DROP DATABASE IF EXISTS :oa4mpDatabase;
 DROP USER IF EXISTS :oa4mpServerUser;
 
-/* 
+/*
   Schemas live in databases, so create the database then the schema.
-  Note that you have to switch to use the database after you create it 
+  Note that you have to switch to use the database after you create it
   or you will not create the schema in the right place
-  and get a "schema not found" exception. 
+  and get a "schema not found" exception.
 */
 CREATE USER :oa4mpServerUser with PASSWORD :oa4mpServerUserPassword;
 
@@ -86,7 +86,7 @@ CREATE UNIQUE INDEX trans_ndx ON :oa4mpSchema.:oa4mpTransactionTable (temp_token
 /*
  Set permissions. There is an admin user name oa4mp-admin to help with this.
  Note that you may, depending on some other issues, have to grant privileges on the schema
- differently than below. Schema access is necessary or the users will still not be able to 
+ differently than below. Schema access is necessary or the users will still not be able to
  gain access to the tables. i.e. you can
  grant privileges to the table but still not be able to access things through the schema.
 */

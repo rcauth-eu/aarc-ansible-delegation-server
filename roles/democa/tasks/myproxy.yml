@@ -22,7 +22,7 @@
     group: myproxy
     recurse: yes
 
-# configure myproxy 
+# configure myproxy
 
 - name: copy myproxy server config
   template:

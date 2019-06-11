@@ -12,5 +12,5 @@
   notify: restart network
   when: not private_ds_address == private_ca_address
 
-# flush handlers in order to restart network as soon as ifcfg changes 
+# flush handlers in order to restart network as soon as ifcfg changes
 - meta: flush_handlers

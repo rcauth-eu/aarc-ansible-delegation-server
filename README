@@ -29,22 +29,22 @@ Prerequisites
     set the hostcert_intermediate variable to the correct PEM file.
     In case of a hostcert_ca_tarball, place the input tarball in
     roles/delegserver/files
- 
+
  2. Make sure you have replaced the oauth2.war and oa2-cli.jar .PLACEHOLDER
     files in 'roles/delegserver/files/' with the actual files.
     For rebuilding, see
-	https://github.com/rcauth-eu/aarc-delegation-server
+        https://github.com/rcauth-eu/aarc-delegation-server
     which builds
-	./delegation-server/target/oauth2.war
+        ./delegation-server/target/oauth2.war
     For rebuilding the oa2-cli.jar you need to enable the cli profile
     (see ./oa4mp-server-admin-oauth2/pom.xml)
-	mvn -P cli package
+        mvn -P cli package
     which builds
-	./delegation-server/target/oa2-cli.jar
- 
+        ./delegation-server/target/oa2-cli.jar
+
  3. Download a new Oracle Java RPM (8 has been verified), and rename or create a
     symlink in 'roles/delegserver/files/' named jre.rpm.
- 
+
  4. You need to create a JSON Web Keys file to replace ds.jwk.PLACEHOLDER file
     in 'roles/delegserver/files/':
     - Create a dummy config file:
@@ -59,13 +59,13 @@ Prerequisites
     - remove the 'tmp.conf' and 'tmp.log' files
     Lookup the 'kid' in the created file, use e.g. the RS256 key and enter the
     value as 'oa4mp_server_jwk_key_id' in 'delegserver_env.yml'
- 
+
  5. You need to create the passphrases for the different components.
     This can be done using the secrets.yml playbook. Run it using
-	ansible-playbook -e configdir=<path-to-config-dir> secrets.yml
+        ansible-playbook -e configdir=<path-to-config-dir> secrets.yml
     or set already the right configdir in your inventory file and run
-	ansible-playbook -i hosts.inventory secrets.yml
-    
+        ansible-playbook -i hosts.inventory secrets.yml
+
 
 
 How to use these scripts?
@@ -99,7 +99,7 @@ Configuration:
     a. this mostly should define the private network between the delegation
        server and the backend CA. It overrides variables set in
        roles/common/defaults/main.yml.
-   
+
    The common role is not a full role, but a collection of common variables used
    by the different playbooks (cafrontend, democa and delegserver).
 

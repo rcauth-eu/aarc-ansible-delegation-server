@@ -1,6 +1,6 @@
 ---
 
-# IGTF 
+# IGTF
 
 - name: adding IGTF GPG key
   rpm_key:
@@ -17,7 +17,7 @@
     mode: 0644
   when: igtf_current_baseurl is defined
 
-# Shibboleth 
+# Shibboleth
 
 - name: adding Shibboleth GPG key
   rpm_key:

@@ -2,7 +2,7 @@
 # Configure Demo CA and Delegation Server hosts
 
 # In case you want to install them on a single host, just
-# enter the same hostname under both groups 
+# enter the same hostname under both groups
 
 [democa]
 myhost.mydomain

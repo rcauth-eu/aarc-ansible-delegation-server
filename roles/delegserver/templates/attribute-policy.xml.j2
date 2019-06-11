@@ -16,16 +16,16 @@
         <Rule xsi:type="AttributeValueString" value="employee"/>
         <Rule xsi:type="AttributeValueString" value="library-walk-in"/>
     </afp:PermitValueRule>
-    
+
     <!--
     Shared rule for all "scoped" attributes, but you'll have to manually apply it inside
     an AttributeRule for each attribute you want to check.
     -->
     <!--
     For Delegation Server behind a WAYF, we should accept any scope. See further:
-	https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPAttributeFilter
-	https://wiki.shibboleth.net/confluence/display/SHIB2/IdPAddAttributeFilter
-	https://wiki.shibboleth.net/confluence/display/SHIB2/IdPFilterRequirementANY
+        https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPAttributeFilter
+        https://wiki.shibboleth.net/confluence/display/SHIB2/IdPAddAttributeFilter
+        https://wiki.shibboleth.net/confluence/display/SHIB2/IdPFilterRequirementANY
     -->
     <afp:PermitValueRule id="ScopingRules" xsi:type="ANY"/>
 <!--    <afp:PermitValueRule id="ScopingRules" xsi:type="AND">
@@ -52,7 +52,7 @@
         <afp:AttributeRule attributeID="primary-affiliation">
             <afp:PermitValueRuleReference ref="eduPersonAffiliationValues"/>
         </afp:AttributeRule>
-        
+
         <afp:AttributeRule attributeID="eppn">
             <afp:PermitValueRuleReference ref="ScopingRules"/>
         </afp:AttributeRule>
@@ -65,18 +65,18 @@
         <afp:AttributeRule attributeID="persistent-id">
             <afp:PermitValueRule xsi:type="saml:NameIDQualifierString"/>
         </afp:AttributeRule>
-        
+
         <!-- Enforce that the values of schacHomeOrganization are a valid Scope. -->
-	<!--
-	See above: for Delegation Server behind a WAYF, we should accept any scope.
-	-->
+        <!--
+        See above: for Delegation Server behind a WAYF, we should accept any scope.
+        -->
 <!--        <afp:AttributeRule attributeID="schacHomeOrganization">
             <afp:PermitValueRule xsi:type="saml:AttributeValueMatchesShibMDScope" />
         </afp:AttributeRule>-->
 
         <!-- Catch-all that passes everything else through unmolested. -->
         <afp:AttributeRule attributeID="*" permitAny="true"/>
-        
+
     </afp:AttributeFilterPolicy>
 
 </afp:AttributeFilterPolicyGroup>

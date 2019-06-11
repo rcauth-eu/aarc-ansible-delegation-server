@@ -2,7 +2,7 @@
 
 ### enabled and disabled services
 
-enabled_services: 
+enabled_services:
  - tomcat
  - httpd
  - shibd
