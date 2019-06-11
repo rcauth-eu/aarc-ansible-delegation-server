@@ -1,8 +1,9 @@
 ---
 # Install backup packages
 - name: install backup package dependencies
-  yum: name={{item}} state=present
-  with_items: "{{ backup_packages }}"
+  yum:
+    name: "{{ backup_packages }}"
+    state: present
 
 # Setup backup script and cronjob
 - name: copy backup.sh

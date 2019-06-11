@@ -79,6 +79,7 @@ oa4mp_server_conf_dir: "{{ oa4mp_server_dir }}/conf"
 oa4mp_server_conf_file: "{{ oa4mp_server_conf_dir }}/cfg.xml"
 oa4mp_server_keystore: "{{ oa4mp_server_conf_dir }}/private-hostcred.p12"
 oa4mp_server_log_dir: "{{ oa4mp_server_dir }}/log"
+oa4mp_server_log_size: 10000000
 oa4mp_server_storage_dir: "{{ oa4mp_server_dir }}/storage"
 oa4mp_server_tools_dir: "{{ oa4mp_server_dir }}/tools"
 oa4mp_server_certificates_dir: "{{ oa4mp_server_dir }}/certificates"

@@ -7,15 +7,13 @@
 
 - name: install general packages
   yum:
-    name: "{{ item }}"
+    name: "{{ general_packages }}"
     state: present
-  with_items: "{{ general_packages }}"
 
 - name: install extra packages for dependencies
   yum:
-    name: "{{ item }}"
+    name: "{{ extra_packages }}"
     state: present
-  with_items: "{{ extra_packages }}"
 
 # disable yum-cron auto_update (when yum-cron is there)
 - name: check whether yum-cron is installed

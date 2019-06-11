@@ -3,8 +3,9 @@
 # Install rsync
 
 - name: install rsync packages
-  yum: name={{item}} state=present
-  with_items: "{{ rsync_packages }}"
+  yum:
+    name: "{{ rsync_packages }}"
+    state: present
 
 # Setup rsync daemon for backups to outside
 

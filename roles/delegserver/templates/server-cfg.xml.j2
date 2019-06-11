@@ -9,7 +9,7 @@
         <!-- Regular Logs -->
         <logging logFileName="{{ oa4mp_server_log_dir }}/{{ oa4mp_server }}.log"
                  logName="oauth2"
-                 logSize="10000000"
+                 logSize="{{ oa4mp_server_log_size }}"
                  logFileCount="10"
                  debug="true"/>
 

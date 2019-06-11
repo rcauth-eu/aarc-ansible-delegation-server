@@ -2,8 +2,9 @@
 
 # Install myproxy packages
 - name: install myproxy packages
-  yum: name={{item}} state=present
-  with_items: "{{ myproxy_packages }}"
+  yum:
+    name: "{{ myproxy_packages }}"
+    state: present
 
 # Create a CA
 
