@@ -4,14 +4,19 @@
 
     <!-- ############################################################################## -->
 
-    <service name="server-config" address="https://{{ inventory_hostname }}/{{ oa4mp_server }}" debug="true" disableDefaultStores="false">
+    <service name="server-config" address="https://{{ inventory_hostname }}/{{ oa4mp_server }}" debug="{{ oa4mp_server_log_debug }}" disableDefaultStores="false">
 
         <!-- Regular Logs -->
         <logging logFileName="{{ oa4mp_server_log_dir }}/{{ oa4mp_server }}.log"
                  logName="oauth2"
                  logSize="{{ oa4mp_server_log_size }}"
                  logFileCount="10"
-                 debug="true"/>
+{% if oa4mp_server_log_debug|lower == "off" %}
+                 debug="false"
+{% else %}
+                 debug="true"
+{% endif %}
+	/>
 
         <!-- Trace Logs -->
         <traceLogging logFileName="{{ oa4mp_server_log_dir }}/trace.log"
