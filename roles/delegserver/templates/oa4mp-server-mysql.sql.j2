@@ -1,55 +1,62 @@
 /*
-   This script will create the tables for a basic oa4mp install. Since MySQL has *no* varaible
-   support, everything is hard-coded. if you want something other than the default names and
-   then edit the file.
+   This script will create the tables for a basic oa4mp install. Since MySQL has
+   *no* variable support, everything is hard-coded. if you want something other
+   than the default names and then edit the file.
 */
 
 /*
-Usage: Log in as an administrator (such as root) that can create the user, if need be.
+Usage: Log in as an administrator (such as root) that can create the user.
+Normally this is done by the ansible script, otherwise it is (probably) also
+done when granting the permissions later on.
 
 CREATE USER '{{ oa4mp_server_db_user }}'@'localhost' IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-COMMIT;
-
-Run the rest of this script. The user must exist before permissions are granted.
+Run the rest of this script.
 */
 
-/* CREATE USER '{{ oa4mp_server_db_user }}'@'localhost' IDENTIFIED BY '{{ oa4mp_server_db_pw }}'; */
+/* User and database are already created by the ansible script, hence next line
+ * is normally non-functional */
+CREATE DATABASE IF NOT EXISTS {{ oa4mp_server_db }} DEFAULT CHARACTER SET utf8;
 
-CREATE DATABASE IF NOT EXISTS {{ oa4mp_server_db }}
-DEFAULT CHARACTER SET utf8;
 USE {{ oa4mp_server_db }};
 
 /*
-Some useful commands. Lst two list users and will show permissions for a single user on a machine.:
+Some useful commands:
  Show Databases;
  Show schemas;
  SELECT User FROM mysql.user;
  SHOW GRANTS FOR 'user'@'localhost';
  */
 
-CREATE TABLE IF NOT EXISTS {{ oa4mp_server_db }}.clients (
+CREATE TABLE IF NOT EXISTS clients (
   client_id     VARCHAR(255) PRIMARY KEY,
   public_key    TEXT,
-  name          TEXT,
-  home_url      TEXT,
-  error_url     TEXT,
+  name          TEXT CHARACTER SET 'utf8',
+  description   TEXT CHARACTER SET 'utf8',
   email         TEXT,
+  home_url      TEXT,
+  rt_lifetime   BIGINT,
   proxy_limited BOOLEAN,
-  creation_ts   TIMESTAMP,
-  rt_lifetime bigint,
   callback_uri  TEXT,
-  description   TEXT CHARACTER SET 'utf8'
+  scopes        TEXT,
+  creation_ts   TIMESTAMP,
+  sign_tokens   BOOLEAN,
+  issuer        TEXT,
+  error_url     TEXT,
+  public_client BOOLEAN,
+  ldap          TEXT,
+  cfg           TEXT
 );
 
-CREATE TABLE IF NOT EXISTS {{ oa4mp_server_db }}.client_approvals (
+CREATE TABLE IF NOT EXISTS client_approvals (
   client_id   VARCHAR(255) PRIMARY KEY,
   approver    TEXT,
   approved    BOOLEAN,
-  approval_ts TIMESTAMP
+  approval_ts TIMESTAMP,
+  status      TEXT
 );
 
-CREATE TABLE IF NOT EXISTS {{ oa4mp_server_db }}.transactions (
+CREATE TABLE IF NOT EXISTS transactions (
   temp_token          VARCHAR(255) PRIMARY KEY,
   temp_token_valid    BOOLEAN,
   callback_uri        TEXT,
@@ -62,19 +69,24 @@ CREATE TABLE IF NOT EXISTS {{ oa4mp_server_db }}.transactions (
   refresh_token_valid BOOLEAN,
   expires_in          BIGINT,
   certificate         TEXT,
-  username            TEXT,
-  myproxyUsername     TEXT,
+  username            TEXT CHARACTER SET 'utf8',
+  myproxyUsername     TEXT CHARACTER SET 'utf8',
   claims              TEXT CHARACTER SET 'utf8',
   user_attributes     TEXT CHARACTER SET 'utf8',
-  trace_record        TEXT,
+  trace_record        CHAR(44),
+  sequence_nr         SMALLINT UNSIGNED,
+  access_token_valid  BOOLEAN,
+  auth_time           TIMESTAMP,
+  nonce               TEXT,
+  scopes              TEXT CHARACTER SET 'utf8',
+  states              TEXT CHARACTER SET 'utf8',
   UNIQUE INDEX verifier (verifier_token(255)),
   UNIQUE INDEX accessToken (access_token(255)),
   UNIQUE INDEX refreshToken (refresh_token(255)),
   UNIQUE INDEX username (username(255),access_token(255))
 );
 
-
-CREATE TABLE IF NOT EXISTS {{ oa4mp_server_db }}.trace_records (
+CREATE TABLE IF NOT EXISTS trace_records (
   cn_hash             CHAR(44),
   sequence_nr         SMALLINT UNSIGNED,
   attribute_hash      CHAR(44),
@@ -87,28 +99,26 @@ CREATE TABLE IF NOT EXISTS {{ oa4mp_server_db }}.trace_records (
 
 COMMIT;
 
-/*
- Now to grant restricted access. The  tables have to exist before this step
-*/
+/* Now grant restricted access. The tables have to exist before this step. */
 
-GRANT ALL ON {{ oa4mp_server_db }}.client_approvals
-    TO '{{ oa4mp_server_db_user }}'@'localhost'
-    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON client_approvals
+        TO '{{ oa4mp_server_db_user }}'@'localhost'
+        IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.clients
-    TO '{{ oa4mp_server_db_user }}'@'localhost'
-    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON clients
+        TO '{{ oa4mp_server_db_user }}'@'localhost'
+        IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.callbacks
-    TO '{{ oa4mp_server_db_user }}'@'localhost'
-    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON callbacks
+        TO '{{ oa4mp_server_db_user }}'@'localhost'
+        IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.transactions
-    TO '{{ oa4mp_server_db_user }}'@'localhost'
-    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON transactions
+        TO '{{ oa4mp_server_db_user }}'@'localhost'
+        IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
-GRANT ALL ON {{ oa4mp_server_db }}.trace_records
-    TO '{{ oa4mp_server_db_user }}'@'localhost'
-    IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
+GRANT ALL ON trace_records
+        TO '{{ oa4mp_server_db_user }}'@'localhost'
+        IDENTIFIED BY '{{ oa4mp_server_db_pw }}';
 
 COMMIT;
