@@ -16,7 +16,7 @@
 - import_tasks: tomcat.yml
 - import_tasks: httpd.yml
 - import_tasks: shib.yml
-- import_tasks: mariadb.yml
+- import_tasks: mysql.yml
 #- import_tasks: postgresql.yml
 
 ### config for DS itself

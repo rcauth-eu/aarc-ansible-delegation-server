@@ -1,34 +1,34 @@
 ---
 
-# Install MariaDB Server
+# Install MariaDB/MySQL Server
 
-- name: install MariaDB
+- name: install MariaDB/MySQL
   yum:
-    name: "{{ mariadb_packages }}"
+    name: "{{ mysql_packages }}"
     state: present
-  register: mariadb_installation
+  register: mysql_installation
 
 - name: make a link to the connector
   file:
-    src: "{{ mariadb_connector_path }}/{{ mariadb_connector }}"
-    dest: "{{ catalina_home }}/lib/{{ mariadb_connector }}"
+    src: "{{ mysql_connector_path }}/{{ mysql_connector }}"
+    dest: "{{ catalina_home }}/lib/{{ mysql_connector }}"
     owner: root
     group: root
     state: link
 
-# Start MariaDB Server
+# Start MariaDB/MySQL Server
 
-- name: start the MariaDB service
-  service: name=mariadb state=started enabled=yes
+- name: start the MariaDB/MySQL service
+  service: name={{ mysql_service }} state=started enabled=yes
 
 # Configure root password (but only on fresh installations)
 
-- name: update mariadb root password for all root accounts
-  mysql_user: name=root host={{ item }} password={{ mariadb_root_password }} priv=*.*:ALL,GRANT
+- name: update MariaDB/MySQL root password for all root accounts
+  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} priv=*.*:ALL,GRANT
   with_items:
     - 127.0.0.1
     - localhost
-  when: mariadb_installation.changed
+  when: mysql_installation.changed
 
 # check OA4MP Server DB
 # NOTE: we cannot just check the DB without creating, but to prevent import from
@@ -42,22 +42,22 @@
     state: present
     encoding: utf8
     login_user: root
-    login_password: "{{ mariadb_root_password }}"
+    login_password: "{{ mysql_root_password }}"
   register: server_db
-  when: mariadb_root_password is defined
+  when: mysql_root_password is defined
 
-- name: update mariadb oa4mp user account
+- name: update MariaDB/MySQL oa4mp user account
   mysql_user:
     name: "{{ oa4mp_server_db_user }}"
     host: "{{ item }}"
     password: "{{ oa4mp_server_db_pw }}"
     priv: "{{ oa4mp_server_db }}.*:ALL"
     login_user: root
-    login_password: "{{ mariadb_root_password }}"
+    login_password: "{{ mysql_root_password }}"
   with_items:
     - 127.0.0.1
     - localhost
-  when: mariadb_root_password is defined
+  when: mysql_root_password is defined
 
 - name: copy oa4mp server sql script
   template:
@@ -71,7 +71,7 @@
     name: all
     target: /tmp/oa4mp-server-mysql.sql
     login_user: root
-    login_password: "{{ mariadb_root_password }}"
+    login_password: "{{ mysql_root_password }}"
   when: server_db is defined and server_db.changed
 
 - name: remove oa4mp server sql script
