@@ -101,3 +101,22 @@
          </RequireAll>
        </Location>
   notify: restart httpd
+
+- name: register protected resource /admin-register in httpd
+  blockinfile:
+     dest: "{{ shib_httpd_conf }}"
+     marker: "# {mark} ANSIBLE MANAGED BLOCK /admin-register"
+     owner: "root"
+     group: "root"
+     mode: 0644
+     block: |
+       <Location /{{oa4mp_server}}/admin-register>
+         AuthType shibboleth
+         ShibRequestSetting requireSession 1
+         ShibUseHeaders On
+         <RequireAll>
+       #    Require not user jdoe@example.org
+           Require valid-user
+         </RequireAll>
+       </Location>
+  notify: restart httpd
