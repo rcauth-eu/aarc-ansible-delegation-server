@@ -38,7 +38,23 @@ SSLCryptoDevice builtin
     RewriteRule /oauth2/authorize "-"      [CO=idphint:%2:.rcauth.eu:1:/:secure:httponly]
 
     ProxyPass /{{ oa4mp_server }}/authorized !
-    ProxyPass /{{ oa4mp_server }} ajp://127.0.0.1:8009/{{ oa4mp_server }}
+
+    # Explicitly proxy all the server-subendpoints, instead of the server
+    # endpoint itself.
+    ProxyPass /{{ oa4mp_server }}/token          ajp://127.0.0.1:8009/{{ oa4mp_server }}/token
+    ProxyPass /{{ oa4mp_server }}/getcert        ajp://127.0.0.1:8009/{{ oa4mp_server }}/getcert
+    ProxyPass /{{ oa4mp_server }}/error          ajp://127.0.0.1:8009/{{ oa4mp_server }}/error
+    ProxyPass /{{ oa4mp_server }}/authorize      ajp://127.0.0.1:8009/{{ oa4mp_server }}/authorize
+    ProxyPass /{{ oa4mp_server }}/admin-register ajp://127.0.0.1:8009/{{ oa4mp_server }}/admin-register
+    ProxyPass /{{ oa4mp_server }}/clients        ajp://127.0.0.1:8009/{{ oa4mp_server }}/clients
+    ProxyPass /{{ oa4mp_server }}/register       ajp://127.0.0.1:8009/{{ oa4mp_server }}/register
+    ProxyPass /{{ oa4mp_server }}/.well-known    ajp://127.0.0.1:8009/{{ oa4mp_server }}/.well-known
+    ProxyPass /{{ oa4mp_server }}/certs          ajp://127.0.0.1:8009/{{ oa4mp_server }}/certs
+    ProxyPass /{{ oa4mp_server }}/userinfo       ajp://127.0.0.1:8009/{{ oa4mp_server }}/userinfo
+
+    ProxyPass /{{ oa4mp_server }}/RCauth-eu-logo-150.gif ajp://127.0.0.1:8009/{{ oa4mp_server }}/RCauth-eu-logo-150.gif
+    ProxyPass /{{ oa4mp_server }}/rcauth.css             ajp://127.0.0.1:8009/{{ oa4mp_server }}/rcauth.css
+    ProxyPass /{{ oa4mp_server }}/default.css            ajp://127.0.0.1:8009/{{ oa4mp_server }}/default.css
 
     ProxyRequests Off
     UseCanonicalPhysicalPort On
