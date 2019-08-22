@@ -16,7 +16,7 @@
 {% else %}
                  debug="true"
 {% endif %}
-	/>
+        />
 
         <!-- Trace Logs -->
         <traceLogging logFileName="{{ oa4mp_server_log_dir }}/trace.log"
@@ -113,6 +113,8 @@
                          <clients/>
                          <clientApprovals/>
                          <traceRecords/>
+                         <permissions/>
+                         <adminClients/>
         </{{ oa4mp_server_db_conf }}>
 
 {% else %}
@@ -125,6 +127,8 @@
             <clients/>
             <clientApprovals/>
             <traceRecords/>
+            <permissions/>
+            <adminClients/>
         </{{ oa4mp_server_db_conf }}>
 
 {% endif %}
