@@ -4,7 +4,7 @@
 
     <!-- ############################################################################## -->
 
-    <service name="server-config" address="https://{{ inventory_hostname }}/{{ oa4mp_server }}" debug="{{ oa4mp_server_log_debug }}" disableDefaultStores="false">
+    <service name="server-config" address="https://{{ inventory_hostname }}/{{ oa4mp_server }}" debug="{{ oa4mp_server_log_debug }}" disableDefaultStores="false" OIDCEnabled="true">
 
         <!-- Regular Logs -->
         <logging logFileName="{{ oa4mp_server_log_dir }}/{{ oa4mp_server }}.log"
