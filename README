@@ -31,10 +31,11 @@ Prerequisites
     roles/delegserver/files
 
  2. Make sure you have replaced the oauth2.war and oa2-cli.jar .PLACEHOLDER
-    files in 'roles/delegserver/files/' with the actual files.
-    For rebuilding, see
+    files in 'roles/delegserver/files/' with the actual files. See
         https://github.com/rcauth-eu/aarc-delegation-server
-    which builds
+    You can either use the prebuilt released artefacts or rebuild from source.
+    For this version of these ansible scripts use the v0.2.0 release.
+    Rebuilding will result in
         ./delegation-server/target/oauth2.war
     For rebuilding the oa2-cli.jar you need to enable the cli profile
     (see ./oa4mp-server-admin-oauth2/pom.xml)
