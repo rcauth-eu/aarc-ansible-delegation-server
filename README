@@ -8,8 +8,9 @@ What are these scripts for?
 
 These scripts are for deploying a Delegation Server (DS) with optionally a demo
 backend CA. To find out more about what this setup is useful for take a look at:
-https://wiki.nikhef.nl/grid/AARC_Pilot You can use these scripts to deploy a DS
-and optionally backend demo CA either on different hosts or a single host.
+https://wiki.nikhef.nl/grid/RCauth.eu_and_MasterPortal_overview
+You can use these scripts to deploy a DS and optionally backend demo CA either
+on different hosts or a single host.
 
 The demo CA is deployed using the democa playbook. The delegation server itself
 is deployed using two playbooks, cafrontend and delegserver. The first playbook
