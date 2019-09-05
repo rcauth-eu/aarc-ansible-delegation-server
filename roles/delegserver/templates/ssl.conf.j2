@@ -1,6 +1,9 @@
 LoadModule ssl_module modules/mod_ssl.so
 Listen 443
 
+# just publish Apache as server
+ServerTokens Prod
+
 SSLPassPhraseDialog  builtin
 SSLSessionCache         shmcb:/var/cache/mod_ssl/scache(512000)
 SSLSessionCacheTimeout  300
@@ -24,6 +27,23 @@ SSLCryptoDevice builtin
     ServerAlias {{ server_alias }}
 {% endfor %}
 {% endif %}
+
+    # see https://securityheaders.com/ (retrieved 2018-09-05)
+    # Enable HSTS (was 182 days, see below, now set to 30 days)
+    Header always set Strict-Transport-Security "max-age=2592000"
+    # Prevent iFrames
+    Header always set X-Frame-Options "SAMEORIGIN"
+    # Prevent XSS attacks: configure the built in reflective XSS protection found
+    # in Internet Explorer, Chrome and Safari (Webkit).
+    Header always set X-Xss-Protection "1; mode=block"
+    # prevents Google Chrome and Internet Explorer from trying to mime-sniff the
+    # content-type of a response away from the one being declared by the server.
+    Header always set X-Content-Type-Options "nosniff"
+    # Still in draft. Instructs the browser to never send the referer header with
+    # requests that are made from your site.
+    Header always set Referrer-Policy no-referrer
+    # Only allow content from ourselves
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
 
     ErrorLog logs/ssl_error_log
     TransferLog logs/ssl_access_log
@@ -72,7 +92,8 @@ SSLCryptoDevice builtin
     SSLCertificateChainFile {{ hostcert_intermediate }}
 {% endif %}
 
-    Header always set Strict-Transport-Security "max-age=15724800"
+# Next one moved up
+#    Header always set Strict-Transport-Security "max-age=15724800"
 
     CustomLog logs/ssl_request_log "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
 
