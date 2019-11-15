@@ -55,7 +55,7 @@ SSLCryptoDevice builtin
     # confused (newer mod_rewrite can use ; as separator)
     RewriteCond %{QUERY_STRING}     (^|&)idphint=([^:&]+)    [NC]
     # idphint cookie for domain rcauth.eu, expires 1 min., path /, https only
-    RewriteRule /oauth2/authorize "-"      [CO=idphint:%2:.rcauth.eu:1:/:secure:httponly]
+    RewriteRule /oauth2/authorize "-"      [CO=idphint:%2:{{ idphint_cookie_domain }}:1:/:secure:httponly]
 
     ProxyPass /{{ oa4mp_server }}/authorized !
 

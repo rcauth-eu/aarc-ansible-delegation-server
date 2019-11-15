@@ -14,6 +14,10 @@ hostcert_ca_rpm: ca_TERENA-eScience-SSL-CA-3
 hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
 
 
+### idphint cookie domain, should typically match the WAYF's domain
+### Note that it normally only works when it also matches our domain.
+idphint_cookie_domain: ".example.org"
+
 ### Shibboleth settings: you MUST override (most) of these
 
 shib_entity_id: "https://{{ inventory_hostname }}"
