@@ -1,10 +1,11 @@
 ---
 
-# place trust and key stores
-# Do not do this part when we co-host the myproxy server on the DS.
+# configure trust and key stores
 # NOTE: we need to run dep-tomcat and oa4mp-server first, to have the tomcat
 # user and to have /var/www/server/conf
 
+# Note: tarball can be made by e.g. roles/democa/tasks/canet_ca.yml for a democa
+# In production it is created as part of setting up the backend offline CA host.
 - name: look for private credentials archive
   stat:
     path: "{{ private_dscreds_tarball }}"
