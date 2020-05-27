@@ -44,8 +44,8 @@ Prerequisites
     which builds
         ./delegation-server/target/oa2-cli.jar
 
- 3. Download a new Oracle Java RPM (8 has been verified), and rename or create a
-    symlink in 'roles/delegserver/files/' named jre.rpm.
+ 3. The current scripts are using java-1.8.0-openjdk-headless. You can also use
+    Oracle Java 8.
 
  4. You need to create a JSON Web Keys file to replace ds.jwk.PLACEHOLDER file
     in 'roles/delegserver/files/':
