@@ -30,7 +30,7 @@
 # Configure root password (but only on fresh installations)
 
 #- name: update mariadb root password for all root accounts
-#  mysql_user: name=root host={{ item }} password={{ mariadb_root_password }} priv=*.*:ALL,GRANT
+#  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} priv=*.*:ALL,GRANT
 #  with_items:
 #    - 127.0.0.1
 #    - localhost
@@ -43,7 +43,7 @@
     name: "{{ oa4mp_server_db }}"
     state: present
 #    login_user: root
-#    login_password: "{{ mariadb_root_password }}"
+#    login_password: "{{ mysql_root_password }}"
   register: server_db
 
 - name: copy oa4mp server postgresql script
