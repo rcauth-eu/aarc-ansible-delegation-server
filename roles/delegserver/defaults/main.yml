@@ -3,14 +3,17 @@
 ### DEFAULT VALUES FOR THE delegserver ROLE
 ########################################################################
 
-### Apache hostcert and key
+### httpd
+#server_aliases:
+#  - "realhost.example.org"
+#  - "pilot-ca1.example.org"
 
+### Apache hostcert and key
 hostcert: /etc/grid-security/hostcert.pem
 hostkey: /etc/grid-security/hostkey.pem
 
 ### CA certificates for the (Apache) hostcert/key, also used when getting
 ### the Shibboleth assertion. You must override this depending on the CA.
-
 x509_cert_dir: /etc/grid-security/certificates
 #hostcert_ca_rpm: ca_GEANTeScienceSSLCA4
 #hostcert_ca_rpm: ca_TERENA-eScience-SSL-CA-3
@@ -20,20 +23,20 @@ x509_cert_dir: /etc/grid-security/certificates
 #hostcert_intermediate: /etc/grid-security/certificates/GEANTeScienceSSLCA4.pem
 #hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
 
-### webserver configuration
-# Optionally define a redirect for the index.html page
+### Optionally define a redirect for the index.html page
 #webroot_redirect: "https://www.example.org/"
 
 # Define an actual homepage, use index_empty.html.j2 for an empty page
 index_html_template: index_democa.html.j2
 
 ### Email address used to address warnings about the status of the backend CA
-
 contact: "root@localhost"
+
 
 ### idphint cookie domain, should typically match the WAYF's domain
 ### Note that it normally only works when it also matches our domain.
-idphint_cookie_domain: ".rcauth.eu"
+#idphint_cookie_domain: ".example.org"
+
 
 ### Shibboleth settings: you MUST override (most) of these
 
@@ -66,6 +69,15 @@ shib_meta_tech_mail: "johndoe@organization.com"
 
 ### DS general settings
 
+### Override name of the input file for the DS JSON web key
+### src filename
+oa4mp_server_jwk_input_file: ds.jwk
+### dest filename
+oa4mp_server_jwk_file: "{{ oa4mp_server_conf_dir }}/ds.jwk"
+### Default DS JSON web key id:
+#oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
+
+
 ### Define default backend storage, only fileStore and mysql are supported
 oa4mp_server_db_conf: mysql
 #oa4mp_server_db_conf: fileStore
@@ -90,12 +102,6 @@ oa4mp_server_storage_dir: "{{ oa4mp_server_dir }}/storage"
 oa4mp_server_tools_dir: "{{ oa4mp_server_dir }}/tools"
 oa4mp_server_certificates_dir: "{{ oa4mp_server_dir }}/certificates"
 
-### DS signing keys
-### src filename
-oa4mp_server_jwk_input_file: ds.jwk
-### dest filename
-oa4mp_server_jwk_file: "{{ oa4mp_server_conf_dir }}/ds.jwk"
-
 ### Email settings for notifications about new client approval requests.
 ### See http://grid.ncsa.illinois.edu/myproxy/oauth/server/configuration/server-email.xhtml
 mail_server: "localhost"
@@ -106,10 +112,11 @@ mail_debug: "true"
 mail_message_template: "{{ oa4mp_server_conf_dir }}/mail_message.template"
 mail_subject_template: "{{ oa4mp_server_conf_dir }}/mail_subject.template"
 
+
 ### Internal CAs credentials
 private_creds_dir: /etc/grid-security/canet
 private_creds_capath: "{{ private_creds_dir }}/certificates"
-private_creds_tarball: "{{ private_dscreds_tarball }}"
+
 
 ### Settings for revoking certs from frontend
 revoke_dir: /var/lib/revokes

@@ -1,22 +1,42 @@
 ---
 ########################################################################
-### DEFAULT VALUES FOR THE delegserver ROLE
+### OVERRIDDEN VALUES FOR THE delegserver ROLE
 ########################################################################
 
 ### httpd
+server_aliases:
+  - "realhost.example.org"
+  - "pilot-ca1.example.org"
 
-#webroot_redirect: "https://www.rcauth.eu/"
-#server_aliases:
-#  - "www.example-ca.org"
+### Apache hostcert and key
+#hostcert: /etc/grid-security/hostcert.pem
+#hostkey: /etc/grid-security/hostkey.pem
+
 ### CA certificates for the (Apache) hostcert/key, also used when getting
 ### the Shibboleth assertion. You must override this depending on the CA.
-hostcert_ca_rpm: ca_TERENA-eScience-SSL-CA-3
-hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
+#x509_cert_dir: /etc/grid-security/certificates
+hostcert_ca_rpm: ca_GEANTeScienceSSLCA4
+#hostcert_ca_rpm: ca_TERENA-eScience-SSL-CA-3
+#hostcert_ca_tarball: internalca.tar.gz
+
+### define following when the hostcert is signed by an intermediate CA
+hostcert_intermediate: /etc/grid-security/certificates/GEANTeScienceSSLCA4.pem
+#hostcert_intermediate: /etc/grid-security/certificates/TERENA-eScience-SSL-CA-3.pem
+
+### Optionally define a redirect for the index.html page
+webroot_redirect: "https://rcauth.eu/"
+
+# Define an actual homepage, use index_empty.html.j2 for an empty page
+index_html_template: index_democa.html.j2
+
+### Email address used to address warnings about the status of the backend CA
+contact: "root@localhost"
 
 
 ### idphint cookie domain, should typically match the WAYF's domain
 ### Note that it normally only works when it also matches our domain.
-idphint_cookie_domain: ".example.org"
+idphint_cookie_domain: ".rcauth.eu"
+
 
 ### Shibboleth settings: you MUST override (most) of these
 
@@ -50,6 +70,64 @@ shib_meta_tech_mail: "admin@example.org"
 ### DS general settings
 
 ### Override name of the input file for the DS JSON web key
+### src filename
 #oa4mp_server_jwk_input_file: ds_example.jwk
+### dest filename
+#oa4mp_server_jwk_file: "{{ oa4mp_server_conf_dir }}/ds.jwk"
 ### Default DS JSON web key id:
 oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
+
+
+### Define default backend storage, only fileStore and mysql are supported
+#oa4mp_server_db_conf: mysql
+#oa4mp_server_db_conf: fileStore
+#oa4mp_server_db_conf: mariadb
+#oa4mp_server_db_conf: postgresql
+
+### Other DS server settings, defaults should be fine
+#oa4mp_server: oauth2
+#oa4mp_remote_user: REMOTE_USER
+
+#oa4mp_server_db: oa2server
+#oa4mp_server_db_user: oa4mp
+
+#oa4mp_server_dir: /var/www/server
+#oa4mp_server_conf_dir: "{{ oa4mp_server_dir }}/conf"
+#oa4mp_server_conf_file: "{{ oa4mp_server_conf_dir }}/cfg.xml"
+#oa4mp_server_keystore: "{{ oa4mp_server_conf_dir }}/private-hostcred.p12"
+#oa4mp_server_log_dir: "{{ oa4mp_server_dir }}/log"
+#oa4mp_server_log_size: 10000000
+#oa4mp_server_log_debug: "info"
+#oa4mp_server_storage_dir: "{{ oa4mp_server_dir }}/storage"
+#oa4mp_server_tools_dir: "{{ oa4mp_server_dir }}/tools"
+#oa4mp_server_certificates_dir: "{{ oa4mp_server_dir }}/certificates"
+
+### Email settings for notifications about new client approval requests.
+### See http://grid.ncsa.illinois.edu/myproxy/oauth/server/configuration/server-email.xhtml
+#mail_server: "localhost"
+#mail_recipients: "root@localhost"
+#mail_enabled: "true"
+#mail_use_SSL: "false"
+#mail_debug: "true"
+#mail_message_template: "{{ oa4mp_server_conf_dir }}/mail_message.template"
+#mail_subject_template: "{{ oa4mp_server_conf_dir }}/mail_subject.template"
+
+
+### Internal CAs credentials
+#private_creds_dir: /etc/grid-security/canet
+#private_creds_capath: "{{ private_creds_dir }}/certificates"
+
+
+### Settings for revoking certs from frontend
+#revoke_dir: /var/lib/revokes
+#revoke_pfx: revoke_
+#revoke_dir_webroot: "{{ revoke_dir }}/webroot"
+#revoke_latest: "index.html"
+#revoke_httpd_log: logs/revokes_log
+#revoke_httpd_loglevel: notice
+# Credentials
+# The private credentials tarball has a set for myproxy and for apache
+#revoke_hostcert: "{{ private_creds_dir }}/apachecert.pem"
+#revoke_hostkey: "{{ private_creds_dir }}/apachekey.pem"
+# script
+#revoke_cert_script: /usr/local/sbin/revoke_cert.sh

@@ -3,34 +3,42 @@
 ### OVERRIDDEN VALUES FOR THE common ROLE
 ########################################################################
 
-### Private and public DS interfaces
-### For a *co-hosted* demoCA you want to set the latter 2 to lo
+### You must define or override the private and public DS interfaces
+### For a *co-hosted* demoCA you want to override the latter 2 to lo
 public_ds_interface: eth0
-private_ds_interface: lo
-private_ca_interface: lo
+private_ds_interface: eth1
+private_ca_interface: eth0
+
+#public_ds_interface: eth0
+#private_ds_interface: lo
+#private_ca_interface: lo
 
 ### Private network between frontend and backend CA
-### For a *co-hosted* demoCA you want to set these to 127.0.0.1(/32)
-private_network: 127.0.0.1/32
-private_ds_address: 127.0.0.1
-private_ca_address: 127.0.0.1
+### For a *co-hosted* demoCA you want to override these to 127.0.0.1(/32)
+#private_network: 127.0.0.1/32
+#private_ds_address: 127.0.0.1
+#private_ca_address: 127.0.0.1
+
+private_network: 192.168.100.0/24
+private_ds_address: 192.168.100.254
+private_ca_address: 192.168.100.1
 
 
-### Networks parsed as local and networks/hosts
+### You must define or override the networks parsed as local and networks/hosts
 ### trusted for ssh (the latter must be in the former)
-#local_nets:
-#  - 1.2.3.0/24
+local_nets:
+  - 1.2.3.0/24
 
-#trusted_nets:
-#  - 1.2.3.4/32
+trusted_nets:
+  - 1.2.3.4/32
 
 ### same for IPv6.
 ### Note that /128 in access.conf does not work due to a bug in pam_access.
-#local_nets_v6:
-#  - 1234::/64
+local_nets_v6:
+  - 1234::/64
 
-#trusted_nets_v6:
-#  - 1234::1
+trusted_nets_v6:
+  - 1234::1
 
 
 ### Backup Server configuration: defines hosts allowed to rsync from DS
@@ -56,3 +64,56 @@ ntp_servers:
 ### with the CA. Only used by delegserver, easier to set here since we know
 ### whether we use a demo CA. Can be based on the demoCA's O and OU set below.
 ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
+
+
+### cred tarball
+#private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
+
+
+### the ca_backup_backup directory
+#ca_backup_backup: "{{ ca_backup_home }}/backup"
+
+
+### top-level directory (without full-path) for the CA, underneath ca_backup_backup
+ca_topdir: "simple_ca"
+
+
+########################################################################
+### Normally there is no need to override any of the following
+########################################################################
+
+### MyProxy port
+#private_ca_port: 7512
+
+### Domain and hostnames for the private network
+#private_domain: canet
+#private_ds_hostname: frontend
+#private_ds_fqdn: "{{ private_ds_hostname }}.{{ private_domain }}"
+#private_ca_hostname: ca
+#private_ca_fqdn: "{{ private_ca_hostname }}.{{ private_domain }}"
+
+
+### Hostcert CA for the private network
+#private_ca_country: NL
+#private_ca_org: CANET
+#private_ca_myproxy_ou: myproxy
+#private_ca_myproxy_basedn: "OU={{ private_ca_myproxy_ou }},O={{ private_ca_org }},C={{ private_ca_country }}"
+#private_ca_apache_ou: apache
+
+### Settings for the backup account for a backup from the CA
+#ca_backup_user: "ca_backup"
+#ca_backup_home: "/var/lib/{{ ca_backup_user }}"
+
+#ca_backup_pubkey_input: "/root/authorized_keys"
+
+## Apache portnumber for to-be-revoked list on frontend
+#private_revokelist_port: 8443
+
+
+### MyProxy CA: these settings are only used when running the demoCA
+#democa_name: demoCA
+#democa_tarball: demoCA.tgz
+
+#democa_cn: "Simple CA for Demo RCauth"
+#democa_ou: "Example"
+#democa_o: "Test"

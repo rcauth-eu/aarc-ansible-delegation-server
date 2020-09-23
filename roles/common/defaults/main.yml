@@ -14,14 +14,14 @@
 #private_ca_interface: lo
 
 ### Private network between frontend and backend CA
-### For a *co-hosted* demoCA you want to override these to 127.0.0.1
+### For a *co-hosted* demoCA you want to override these to 127.0.0.1(/32)
 #private_network: 127.0.0.1/32
 #private_ds_address: 127.0.0.1
 #private_ca_address: 127.0.0.1
 
-private_network: 192.168.1.0/24
-private_ds_address: 192.168.1.254
-private_ca_address: 192.168.1.1
+#private_network: 192.168.100.0/24
+#private_ds_address: 192.168.100.254
+#private_ca_address: 192.168.100.1
 
 
 ### You must define or override the networks parsed as local and networks/hosts
@@ -63,7 +63,19 @@ ntp_servers:
 ### CA BaseDN in LDAP format, must be set to the correct value corresponding
 ### with the CA. Only used by delegserver, easier to set here since we know
 ### whether we use a demo CA. Can be based on the demoCA's O and OU set below.
-#ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
+ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
+
+
+### cred tarball
+private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
+
+
+### the ca_backup_backup directory
+ca_backup_backup: "{{ ca_backup_home }}/backup"
+
+
+### top-level directory (without full-path) for the CA, underneath ca_backup_backup
+ca_topdir: "simple_ca"
 
 
 ########################################################################
@@ -80,6 +92,7 @@ private_ds_fqdn: "{{ private_ds_hostname }}.{{ private_domain }}"
 private_ca_hostname: ca
 private_ca_fqdn: "{{ private_ca_hostname }}.{{ private_domain }}"
 
+
 ### Hostcert CA for the private network
 private_ca_country: NL
 private_ca_org: CANET
@@ -87,15 +100,9 @@ private_ca_myproxy_ou: myproxy
 private_ca_myproxy_basedn: "OU={{ private_ca_myproxy_ou }},O={{ private_ca_org }},C={{ private_ca_country }}"
 private_ca_apache_ou: apache
 
-private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
-
-### top-level directory (without full-path) for the CA.
-ca_topdir: "simple_ca"
-
 ### Settings for the backup account for a backup from the CA
 ca_backup_user: "ca_backup"
 ca_backup_home: "/var/lib/{{ ca_backup_user }}"
-ca_backup_backup: "{{ ca_backup_home }}/backup"
 
 ca_backup_pubkey_input: "/root/authorized_keys"
 

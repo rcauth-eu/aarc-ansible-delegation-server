@@ -6,9 +6,11 @@
 ### Postfix config for the delegation server
 
 ### smtp_server is used for both local and non-local mail, via mailbox_transport
-### and relayhost respectively. Define the appropriate value here or elsewhere
-#smtp_server: smtp.somewhere.com
+### and relayhost respectively.
+#smtp_server: smtp.example.org
 ### define a luser_relay to send all local email to, e.g. $local@{{ smtp_server }}
 luser_relay: $local@{{ smtp_server }}
+### where to send root's email to
 root_alias: /var/spool/mail/root
+# postfix_mydestinations
 postfix_mydestinations: "{{ private_ds_hostname }}, {{ private_ds_fqdn }}, {{ private_domain }}, {{ inventory_hostname }}"
