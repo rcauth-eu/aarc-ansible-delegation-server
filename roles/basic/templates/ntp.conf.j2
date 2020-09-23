@@ -1,10 +1,12 @@
 driftfile /var/lib/ntp/drift
 
+{# conditional part is _only_ relevant for a demoCA on a separate host #}
 {% if inventory_hostname == groups.delegserver.0 %}
 {% for ntp_addr in ntp_servers %}
 server {{ ntp_addr }}
 {% endfor %}
 {% else %}
+{# this part is for the separate demoCA host #}
 server {{ private_ds_address }} prefer    # delegation server clock
 {% endif %}
 
@@ -16,7 +18,8 @@ fudge  127.127.1.0 stratum 10
 # Permit all access over the loopback interface.
 restrict default nomodify notrap nopeer noquery
 restrict -6 default nomodify notrap nopeer noquery
-{% if private_ca_address is defined %}
+{# conditional part is _only_ relevant if we are NOT demoCA on separate host #}
+{% if (not 'democa' in groups) or (inventory_hostname != groups.democa.0) %}
 restrict {{ private_ca_address }} nomodify notrap nopeer
 {% endif %}
 restrict 127.0.0.1
