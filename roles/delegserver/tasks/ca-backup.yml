@@ -28,7 +28,8 @@
     group: "{{ ca_backup_user }}"
     mode: 0600
 
-# Allow ssh access for backup user
+# Allow ssh access for backup user. Note that this is normally already done via
+# the roles/basic/tasks/access.yml installing /etc/security/access.conf
 
 - name: enable ssh access for backup user
   lineinfile:
@@ -36,4 +37,15 @@
     insertbefore: '^- : ALL : ALL'
     regexp: "^.*: {{ ca_backup_user }} :"
     line: "+ : {{ ca_backup_user }} : {{ private_ca_address }}"
+    backup: yes
+
+# NOTE: basic role adds password login for root via the access.conf.j2 template
+# such that we can push the ssh keys
+
+- name: remove ssh access for root from backend
+  lineinfile:
+    dest: "/etc/security/access.conf"
+    regexp: "^[#]*(.*: root : {{ private_ca_address }}.*)$"
+    backrefs: yes
+    line: '#\1'
     backup: yes
