@@ -11,7 +11,8 @@
     owner: root
     group: root
     backup: yes
-  register: log_raised
+  # sshd handler is defined in the common role
+  notify: restart sshd
 
 - name: disable ssh password logins
   lineinfile:
@@ -22,8 +23,5 @@
     owner: root
     group: root
     backup: yes
-  register: ps_disabled
-
-- name: restart sshd
-  service: name=sshd state=restarted enabled=yes
-  when: log_raised.changed or ps_disabled.changed
+  # sshd handler is defined in the common role
+  notify: restart sshd

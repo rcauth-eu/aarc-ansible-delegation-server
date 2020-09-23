@@ -15,9 +15,14 @@
     name: ip6tables
     state: restarted
 
-- name: restart sshd
+- name: restart ntpd
   service:
-    name: sshd
+    name: ntpd
+    state: restarted
+
+- name: restart rsyslog
+  service:
+    name: rsyslog
     state: restarted
 
 # restarting the network with the 'service' command breaks the ansible play

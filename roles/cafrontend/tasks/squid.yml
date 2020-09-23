@@ -34,8 +34,4 @@
     group: "root"
     mode: 0644
     backup: yes
-  register: squid_config
-
-- name: restart squid
-  service: name=squid state=restarted enabled=yes
-  when: squid_config.changed
+  notify: restart squid

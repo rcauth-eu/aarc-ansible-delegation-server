@@ -1,0 +1,16 @@
+---
+
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+
+- name: restart postfix
+  service:
+    name: postfix
+    state: restarted
+
+- name: restart squid
+  service:
+    name: squid
+    state: restarted

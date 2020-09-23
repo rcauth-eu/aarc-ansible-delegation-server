@@ -1,0 +1,9 @@
+---
+
+# Define handler for sshd here and not in the basic role since we need it in
+# cafrontend and in delegserver
+
+- name: restart sshd
+  service:
+    name: sshd
+    state: restarted

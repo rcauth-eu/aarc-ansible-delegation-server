@@ -11,7 +11,7 @@
      group: root
      mode: 0644
      backup: yes
-  register: postfix_config
+  notify: restart postfix
 
 - name: configure postfix local destinations
   lineinfile:
@@ -22,7 +22,7 @@
      group: root
      mode: 0644
      backup: yes
-  register: postfix_config
+  notify: restart postfix
 
 - name: set up mail forwarding
   blockinfile:
@@ -55,7 +55,7 @@
        append_dot_mydomain = no
        # the sender_canonical map removes the {{ private_ca_fqdn }}, here we add our FQDN
        append_at_myorigin = yes
-  register: forward_config
+  notify: restart postfix
 
 - name: make mail directory sticky-world writeable
   file:
@@ -97,9 +97,5 @@
 
 - name: initialise alias database
   command: newaliases
+  notify: restart postfix
   when: alias_config.changed
-
-- name: restart postfix
-  service: name=postfix state=restarted enabled=yes
-  when: postfix_config.changed or forward_config.changed or alias_config.changed
-

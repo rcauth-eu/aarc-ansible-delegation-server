@@ -21,8 +21,4 @@
     owner: "root"
     group: "root"
     mode: 0644
-  register: dnsmasq_config
-
-- name: restart dnsmasq
-  service: name=dnsmasq state=restarted enabled=yes
-  when: dnsmasq_config.changed
+  notify: restart dnsmasq

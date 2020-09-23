@@ -16,10 +16,6 @@
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication no
            PermitRootLogin without-password
-  register: sshd_config
+  # sshd handler is defined in the common role
+  notify: restart sshd
   when: not private_ca_address == private_ds_address
-
-# Restart sshd directly (also: we don't have the handler from the basic role)
-- name: restart sshd
-  service: name=sshd state=restarted
-  when: sshd_config.changed
