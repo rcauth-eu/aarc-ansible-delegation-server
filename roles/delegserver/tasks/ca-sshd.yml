@@ -8,7 +8,7 @@
 - name: remove ssh access for root from backend
   lineinfile:
     dest: "/etc/security/access.conf"
-    regexp: "^[#]*(.*: root : {{ private_ca_address }}.*)$"
+    regexp: "^[#]*(.*: root : {{ private_ca_network }}.*)$"
     backrefs: yes
     line: '#\1'
     backup: yes
@@ -22,7 +22,7 @@
     insertafter: EOF
     backup: yes
     block: |
-        Match address {{ private_ca_address }}/32
+        Match address {{ private_ca_network }}
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication no
            PermitRootLogin without-password

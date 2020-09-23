@@ -1,0 +1,34 @@
+# Note: best to specify just IP address
+Listen {{ private_ds_address }}:{{ private_replicate_port }}
+
+# Note: best to specify just IP address, note that the first entry for this port
+# will become the default host configuration.
+<VirtualHost {{ private_ds_address }}:{{ private_replicate_port }}>
+    ErrorLog {{ replicate_httpd_log }}
+    LogLevel {{ replicate_httpd_loglevel }}
+
+    ServerName {{ private_ds_hostname }}.{{ private_domain }}
+
+    DocumentRoot {{ replicate_dir_webroot }}
+
+    SSLEngine on
+    SSLProtocol all -SSLv2 -SSLv3 +TLSv1
+    SSLCertificateFile {{ replicate_servercert }}
+    SSLCertificateKeyFile {{ replicate_serverkey }}
+    SSLCACertificatePath {{ private_creds_capath }}
+
+    SSLVerifyClient require
+</VirtualHost>
+
+<Directory "{{ replicate_dir_webroot }}">
+    AllowOverride None
+    Options FollowSymLinks
+    Require all denied
+    <RequireAll>
+	Require expr %{SSL_CLIENT_S_DN_C} == "{{ private_ca_country }}" \
+		  && %{SSL_CLIENT_S_DN_O} == "{{ private_ca_org }}" \
+		  && %{SSL_CLIENT_S_DN_OU} == "{{ private_ca_apache_ou }}" \
+		  && %{SSL_CLIENT_S_DN_CN} =~ /^{{ private_ds_hostname }}[1-9]*.{{ private_domain }}$/
+	Require ip {{ private_ds_network }}
+    </RequireAll>
+</Directory>

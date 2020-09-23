@@ -1,0 +1,86 @@
+---
+
+# Setup parts needed for mysql replication between frontends.
+# NOTE: we setup both nodes as master and install both the save and restore
+# scripts such that the only difference is which line in the replication cronjob
+# is running.
+
+# First setup the replicate directory and its related webroot with symlink
+- name: create replicate dir
+  file:
+    path: "{{ replicate_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create replicate webroot dir
+  file:
+    path: "{{ replicate_dir_webroot }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  notify: restart httpd
+
+# Setup the host credentials for this part
+- name: ensure hostkey is closed
+  file:
+    path: "{{ replicate_serverkey }}"
+    mode: 0400
+
+- name: copy servercert to clientcert
+  copy:
+    remote_src: yes
+    src: "{{ replicate_servercert }}"
+    dest: "{{ replicate_clientcert }}"
+    owner: "{{ replicate_curl_user }}"
+    group: "{{ replicate_curl_group }}"
+    mode: 0600
+
+- name: copy serverkey to clientkey
+  copy:
+    remote_src: yes
+    src: "{{ replicate_serverkey }}"
+    dest: "{{ replicate_clientkey }}"
+    owner: "{{ replicate_curl_user }}"
+    group: "{{ replicate_curl_group }}"
+    mode: 0400
+
+# Setup the apache configuration
+- name: httpd config for to-be-replicated certifcates
+  template:
+    src: mysql_replicate_httpd.conf.j2
+    dest: /etc/httpd/conf.d/mysql_replicate_httpd.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart httpd
+
+# Install the save script
+- name: install mysql_replicate_save script
+  template:
+    src: mysql_replicate_save.sh.j2
+    dest: "{{ replicate_save_script }}"
+    owner: root
+    group: root
+    mode: 0755
+    backup: yes
+
+# Install the restore script
+- name: install mysql_replicate_restore script
+  template:
+    src: mysql_replicate_restore.sh.j2
+    dest: "{{ replicate_restore_script }}"
+    owner: root
+    group: root
+    mode: 0755
+    backup: yes
+
+# Now setup the actual cronjob
+- name: install replicate cronjob
+  template:
+    src: mysql_replicate_cron.j2
+    dest: /etc/cron.d/mysql_replicate
+

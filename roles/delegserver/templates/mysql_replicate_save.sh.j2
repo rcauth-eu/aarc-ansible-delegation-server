@@ -1,0 +1,47 @@
+#!/bin/sh
+
+PATH={{ cron_path }}
+
+# Defaults
+database={{ oa4mp_server_db }}
+replicatedir={{ replicate_dir }}
+replicatewebroot={{ replicate_dir_webroot }}
+replicatepfx={{ replicate_pfx }}
+replicatelatest=${replicatewebroot}/{{ replicate_latest }}
+replicatesuffix=.sql.gz
+
+# Set umask
+umask 0022
+
+# Create replicate directory when needed
+if [ ! -d "$replicatedir" ];then
+    mkdir -p $replicatedir
+    echo "Created directory \"$replicatedir\""
+fi
+if [ ! -d "$replicatewebroot" ];then
+    mkdir -p $replicatewebroot
+    echo "Created directory \"$replicatewebroot\""
+fi
+cd $replicatedir
+
+# Create new replicate file
+replicatenew=${replicatedir}/${replicatepfx}$(date +%Y%m%d%H%M%S)${replicatesuffix}
+if [ -f "$replicatenew" ];then
+    echo "ERROR: new replicate file $replicatenew already exists" >&2
+    exit 1
+fi
+
+# Source mysql password...
+. /etc/mysql
+# ... and dump and gzip database
+mysqldump -u root --password="$PW" --single-transaction -q $database |\
+    gzip -c > $replicatenew
+
+# Note: no point in comparing: mysql dumps contain a date which always will
+# change, so just make a new symlink to the new latest dump
+ln -sf $replicatenew $replicatelatest
+
+# Remove all older dumps
+find "$replicatedir" -type f -name ${replicatepfx}\*${replicatesuffix} \
+    -not -newer $replicatenew -not -samefile $replicatenew -exec rm {} \;
+echo "Symlink $replicatelatest updated to point to new replicate list $replicatenew"

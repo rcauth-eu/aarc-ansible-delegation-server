@@ -9,11 +9,11 @@
   lineinfile:
     dest: "/etc/security/access.conf"
     insertbefore: '^- : root : ALL'
-    regexp: "^.*: root : {{ private_ca_address }}"
-    line: "+ : root : {{ private_ca_address }}"
+    regexp: "^.*: root : {{ private_ca_network }}"
+    line: "+ : root : {{ private_ca_network }}"
     backup: yes
 
-# Add specific block for password-based logins from the CA backend machine
+# Add specific block for password-based logins from the CA backend machines
 - name: enable ssh password logins for backend
   blockinfile:
     dest: /etc/ssh/sshd_config
@@ -21,7 +21,7 @@
     insertafter: EOF
     backup: yes
     block: |
-        Match address {{ private_ca_address }}/32
+        Match address {{ private_ca_network }}
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication yes
            PermitRootLogin yes

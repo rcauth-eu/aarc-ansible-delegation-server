@@ -20,7 +20,7 @@ restrict default nomodify notrap nopeer noquery
 restrict -6 default nomodify notrap nopeer noquery
 {# conditional part is _only_ relevant if we are NOT demoCA on separate host #}
 {% if (not 'democa' in groups) or (inventory_hostname != groups.democa.0) %}
-restrict {{ private_ca_address }} nomodify notrap nopeer
+restrict {{ private_ca_network | ipaddr('network') }} mask {{ private_ca_network | ipaddr('netmask') }} nomodify notrap nopeer
 {% endif %}
 restrict 127.0.0.1
 restrict -6 ::1

@@ -27,3 +27,19 @@
     group: root
   notify: restart httpd
   when: priv_creds.stat.exists
+
+- name: find other CA tarballs
+  find:
+    paths: "{{ private_ca_tarball_dir }}"
+    patterns: "{{ private_ca_tarball_pattern }}"
+  register: ca_tarballs
+
+- name: unpack other CAs
+  unarchive:
+    src: "{{ item.path }}"
+    remote_src: true
+    dest: "{{ private_creds_dir }}"
+    owner: root
+    group: root
+  notify: restart httpd
+  with_items: "{{ ca_tarballs.files }}"

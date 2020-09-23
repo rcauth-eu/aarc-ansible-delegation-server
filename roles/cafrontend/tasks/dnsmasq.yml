@@ -11,8 +11,17 @@
      mode: 0644
      insertafter: EOF
      block: |
-       {{ private_ca_address }}    {{ private_ca_fqdn }}  {{ private_ca_hostname }}
-       {{ private_ds_address }}    {{ private_ds_fqdn }}  {{ private_ds_hostname }}
+       {{ private_ca_address1 }}      {{ private_ca_fqdn1 }}        {{ private_ca_hostname1 }}
+       {{ private_ca_address2 }}      {{ private_ca_fqdn2 }}        {{ private_ca_hostname2 }}
+       {{ private_ds_address1 }}    {{ private_ds_fqdn1 }}  {{ private_ds_hostname1 }}
+       {{ private_ds_address2 }}    {{ private_ds_fqdn2 }}  {{ private_ds_hostname2 }}
+       
+       # Alias for ourselves
+       {{ private_ds_address }}     {{ private_ds_fqdn }}   {{ private_ds_hostname }}
+       
+       # Alias for our currently used backend
+       {{ private_ca_address }}       {{ private_ca_fqdn }}         {{ private_ca_hostname }}
+  notify: restart dnsmasq
 
 - name: add dnsmasq config
   template:

@@ -74,10 +74,10 @@
 - name: set rewrite rule for senders from backend CA
   lineinfile:
      dest: "/etc/postfix/sender_canonical"
-     regexp: ".*{{ private_ca_fqdn }}"
-     # we rewrite anything at @{{ private_ca_fqdn }} to just the name, append_at_myorigin
-     # will then fix it to <user>@<fqdn>
-     line: '/^(.*)@{{ private_ca_fqdn }}/ ${1}'
+     regexp: ".*\\.{{ private_domain }}"
+     # we rewrite anything ending with {{ private_domain }} to just the name,
+     # append_at_myorigin will then fix it to <user>@<fqdn>
+     line: '/^(.*)@.*\.{{ private_domain }}/ ${1}'
      owner: root
      group: root
      mode: 0644

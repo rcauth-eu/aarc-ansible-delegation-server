@@ -15,13 +15,25 @@ private_ca_interface: eth0
 
 ### Private network between frontend and backend CA
 ### For a *co-hosted* demoCA you want to override these to 127.0.0.1(/32)
+### private_ca_address_other is not used for a demoCA.
 #private_network: 127.0.0.1/32
 #private_ds_address: 127.0.0.1
 #private_ca_address: 127.0.0.1
 
 private_network: 192.168.100.0/24
-private_ds_address: 192.168.100.254
-private_ca_address: 192.168.100.1
+
+private_ds_network: 192.168.100.240/30
+private_ds_address1: 192.168.100.241
+private_ds_address2: 192.168.100.242
+private_ds_address: "{{ private_ds_address1 }}"
+private_mx_default: "{{ private_ds_fqdn1 }}"
+private_mx_backup: "{{ private_ds_fqdn2 }}"
+
+private_ca_network: 192.168.100.0/30
+private_ca_address1: 192.168.100.1
+private_ca_address2: 192.168.100.2
+private_ca_address: "{{ private_ca_address1 }}"
+private_ca_address_other: "{{ private_ca_address2 }}"
 
 
 ### You must define or override the networks parsed as local and networks/hosts
@@ -66,12 +78,14 @@ ntp_servers:
 ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
 
 
-### cred tarball
-#private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
+# Note: the cred tarball directory is based on the DS host therefore needs to be
+# overridden per host config.
+private_dscreds_tarball: "/root/{{ private_ds_fqdn1 }}.tgz"
 
 
-### the ca_backup_backup directory
-#ca_backup_backup: "{{ ca_backup_home }}/{{ private_ca_fqdn }}"
+# Note: the ca_backup_backup directory is based on the CA host therefore needs
+# to be overridden per host config.
+ca_backup_backup: "{{ ca_backup_home }}/{{ private_ca_fqdn1 }}"
 
 
 ### top-level directory (without full-path) for the CA, underneath ca_backup_backup
@@ -88,26 +102,46 @@ ca_topdir: "simple_ca"
 ### Domain and hostnames for the private network
 #private_domain: canet
 #private_ds_hostname: frontend
+#private_ds_hostname1: frontend1
+#private_ds_hostname2: frontend2
 #private_ds_fqdn: "{{ private_ds_hostname }}.{{ private_domain }}"
+#private_ds_fqdn1: "{{ private_ds_hostname1 }}.{{ private_domain }}"
+#private_ds_fqdn2: "{{ private_ds_hostname2 }}.{{ private_domain }}"
 #private_ca_hostname: ca
+#private_ca_hostname1: ca1
+#private_ca_hostname2: ca2
 #private_ca_fqdn: "{{ private_ca_hostname }}.{{ private_domain }}"
+#private_ca_fqdn1: "{{ private_ca_hostname1 }}.{{ private_domain }}"
+#private_ca_fqdn2: "{{ private_ca_hostname2 }}.{{ private_domain }}"
 
 
 ### Hostcert CA for the private network
 #private_ca_country: NL
+# Note: ORG is the same for both backend CAs to make sure that the DN for the
+# frontend nodes will be the same for both CAs. Only the issuerDN is different,
+# and thereby the subject DNs of the CAs.
 #private_ca_org: CANET
 #private_ca_myproxy_ou: myproxy
 #private_ca_myproxy_basedn: "OU={{ private_ca_myproxy_ou }},O={{ private_ca_org }},C={{ private_ca_country }}"
 #private_ca_apache_ou: apache
 
+#private_ca_tarball_dir: "/root"
+#private_ca_tarball_pattern: "{{ private_ca_org }}*-rootCA.tgz"
+
 ### Settings for the backup account for a backup from the CA
 #ca_backup_user: "ca_backup"
 #ca_backup_home: "/var/lib/{{ ca_backup_user }}"
 
+# Note: used as the basename for the inputfiles combined into the authorizedkeys
+# file
 #ca_backup_pubkey_input: "/root/authorized_keys"
+
 
 ## Apache portnumber for to-be-revoked list on frontend
 #private_revokelist_port: 8443
+
+## Apache portnumber for mysql dumps for other frontends
+#private_replicate_port: 9443
 
 
 ### MyProxy CA: these settings are only used when running the demoCA

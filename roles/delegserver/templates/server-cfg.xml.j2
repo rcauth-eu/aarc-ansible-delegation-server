@@ -136,7 +136,8 @@
 {% endif %}
 
         <!-- Note: if the CA is using a cert with it's FQDN,
-             we don't need to set serverDN, but it doesn't harm much either -->
+             we don't need to set serverDN, but it doesn't harm much either,
+             unless the DN is different for the different backend CAs -->
         <myproxy host="{{ private_ca_fqdn }}"
                 port="{{ private_ca_port }}"
                 serverDN="CN={{ private_ca_fqdn }},{{ private_ca_myproxy_basedn }}">
