@@ -1,0 +1,29 @@
+---
+
+# Install the private CAs tarball, used by e.g. tomcat as myproxy client and by
+# the revoke_httpd.conf as host credentials.
+
+# Note: tarball can be made by e.g. roles/democa/tasks/canet_ca.yml for a democa
+# In production it is created as part of setting up the backend offline CA host.
+- name: look for private credentials archive
+  stat:
+    path: "{{ private_dscreds_tarball }}"
+  register: priv_creds
+
+- name: create private_creds_dir
+  file:
+    state: directory
+    path: "{{ private_creds_dir }}"
+    owner: root
+    group: root
+  when: priv_creds.stat.exists
+
+- name: unpack private credentials
+  unarchive:
+    src: "{{ private_dscreds_tarball }}"
+    remote_src: true
+    dest: "{{ private_creds_dir }}"
+    owner: root
+    group: root
+  notify: restart httpd
+  when: priv_creds.stat.exists

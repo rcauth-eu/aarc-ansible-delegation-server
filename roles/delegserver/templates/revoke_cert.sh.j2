@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# Default variables
+revokedir={{ revoke_dir }}
+revokewebroot={{ revoke_dir_webroot }}
+revokepfx={{ revoke_pfx }}
+revokelatest=${revokewebroot}/{{ revoke_latest }}
+
+# Check command line argument(s)
+if [ $# -lt 1 ];then
+    echo "Usage: $(basename $0) <hex serial(s)>" >&2
+    exit 1
+fi
+
+# Set umask
+umask 0022
+
+# Create revoke directory when needed
+if [ ! -d $revokedir ];then
+    mkdir -p $revokedir
+    echo "Created directory $revokedir"
+fi
+if [ ! -d $revokewebroot ];then
+    mkdir -p $revokewebroot
+    echo "Created directory $revokewebroot"
+fi
+cd $revokedir
+
+# Create tempfile containing the merge of the previous file and the new to be
+# revoked certificate numbers
+revoketmp=$(mktemp ${revokedir}/${revokepfx}XXXXXX)
+if [ -f "$revokelatest" ];then
+    cat $revokelatest > $revoketmp
+fi
+for arg in $*;do
+    # Add 0x to arg when needed
+    if echo "$arg" | grep -ivq "^0x";then
+	arg=0x$arg
+    fi
+    # Format the serial to be of the right OpenSSL length
+    printf "%0$(((1+$(printf "%X" $arg|wc -c))/2*2))X" $arg >> $revoketmp
+done
+
+# Create sorted new revoke file
+revokenew=${revokedir}/${revokepfx}$(date +%Y%m%d%H%M%S)
+if [ -f "$revokenew" ];then
+    echo "ERROR: new revoke file $revokenew already exists" >&2
+    rm $revoketmp
+    exit 1
+fi
+sort -u $revoketmp > $revokenew
+rm $revoketmp
+
+# Check wether something has changed
+if [ ! -f $revokelatest ] || ! diff $revokenew $revokelatest > /dev/null;then
+    # Make symlink for the new latest file
+    ln -sf $revokenew $revokelatest
+    echo "Symlink $revokelatest updated to point to new revoke list $revokenew"
+else
+    # Nothing changed, tidy up
+    rm $revokenew
+    echo "No new revoke list, $revokelatest still pointing to latest"
+fi

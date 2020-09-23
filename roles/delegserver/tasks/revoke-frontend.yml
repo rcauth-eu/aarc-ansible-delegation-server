@@ -1,0 +1,72 @@
+---
+
+# Setup parts needed for allowing to revoke a cert from the frontend
+
+# First setup the revoke directory and its related webroot with symlink
+- name: create revoke dir
+  file:
+    path: "{{ revoke_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create revoke webroot dir
+  file:
+    path: "{{ revoke_dir_webroot }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  notify: restart httpd
+
+- name: check for symlink
+  stat:
+    path: "{{ revoke_dir_webroot }}/{{ revoke_latest }}"
+  register: revoke_latest_link
+
+- name: create new empty revoke file
+  file:
+    path: "{{ revoke_dir }}/empty"
+    state: touch
+    owner: root
+    group: root
+    mode: 0644
+  when: revoke_latest_link.stat.islnk is not defined
+
+- name: create new revoke latest symlink
+  file:
+    state: link
+    src: "{{ revoke_dir }}/empty"
+    dest: "{{ revoke_dir_webroot }}/{{ revoke_latest }}"
+    owner: root
+    group: root
+  when: revoke_latest_link.stat.islnk is not defined
+
+# Setup the host credentials for this part
+
+- name: ensure hostkey is closed
+  file:
+    path: "{{ revoke_hostkey }}"
+    mode: 0400
+
+# Setup the apache configuration
+- name: httpd config for to-be-revoked certifcates
+  template:
+    src: revoke_httpd.conf.j2
+    dest: /etc/httpd/conf.d/revoke_httpd.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart httpd
+
+# Install the script
+- name: install revoke_cert script
+  template:
+    src: revoke_cert.sh.j2
+    dest: "{{ revoke_cert_script }}"
+    owner: root
+    group: root
+    mode: 0755
+    backup: yes

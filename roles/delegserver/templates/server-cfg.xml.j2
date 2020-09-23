@@ -139,7 +139,7 @@
              we don't need to set serverDN, but it doesn't harm much either -->
         <myproxy host="{{ private_ca_fqdn }}"
                 port="{{ private_ca_port }}"
-                serverDN="CN={{ private_ca_fqdn }},{{ private_ca_basedn }}">
+                serverDN="CN={{ private_ca_fqdn }},{{ private_ca_myproxy_basedn }}">
             <ssl debug="false">
                 <keystore>
                     <path>{{ oa4mp_server_keystore }}</path>

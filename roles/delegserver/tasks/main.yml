@@ -29,8 +29,13 @@
 
 ### host certs, certdirs and truststores for tomcat and apache
 
+- import_tasks: hostcreds-private.yml
 - import_tasks: hostcreds-tomcat.yml
 - import_tasks: hostcreds-apache.yml
+
+### additional tasks involving the apache webserver
+
+- import_tasks: revoke-frontend.yml
 
 ### enable services
 

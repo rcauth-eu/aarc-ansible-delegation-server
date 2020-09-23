@@ -16,8 +16,11 @@ FRHOST="$2"
 
 COUNTRY="{{ private_ca_country }}"
 ORGANIZATION="{{ private_ca_org }}"
+MYPROXYOU="{{ private_ca_myproxy_ou }}"
+APACHEOU="{{ private_ca_apache_ou }}"
 BASEDN="/C=$COUNTRY/O=$ORGANIZATION"
-
+# Name of the CA, e.g. "CANET-rootCA"
+CANAME="{{ private_ca_org }}-rootCA"
 
 # Set default umask to be closed
 umask 0077
@@ -28,12 +31,11 @@ rm -rf ${CA}
 
 # Setup basic directory structure
 mkdir -p ${CA}/{newcerts,private}
-touch ${CA}/index.txt
-touch ${CA}/index.txt.attr
+touch ${CA}/index.txt{,.attr}
 echo 01 > ${CA}/serial
 
 cat > ${CA}/openssl.cnf << EOF
-RANDFILE                = /dev/urandom
+RANDFILE = /dev/urandom
 HOST = ""
 
 [ ca ]
@@ -72,6 +74,7 @@ countryName                     = Country
 countryName_default             = $COUNTRY
 organizationName                = Organization
 organizationName_default        = $ORGANIZATION
+organizationUnitName            = OrganizationUnit
 commonName                      = Common Name
 
 [ ca_extensions ]
@@ -92,65 +95,80 @@ export OPENSSL_CONF=${CA}/openssl.cnf
 # Create root CA, need to specify days by hand
 openssl req -new -batch -nodes -newkey rsa \
     -keyout ${CA}/private/cakey.pem -x509 -out ${CA}/cacert.pem \
-    -days 36525 -subj "${BASEDN}/CN=CANET-rootCA"
+    -days 36525 -subj "${BASEDN}/CN=${CANAME}"
 cahash=$(openssl x509 -hash -noout -in ${CA}/cacert.pem)
 
-# Create empty longlived CRL
-openssl ca -gencrl -out ${CA}/${cahash}.r0
+# Setup certificates directory for our CA
+
+# First create directory
+mkdir -p ${CA}/certificates
+
+# Copy/create CA files
+cp -p ${CA}/cacert.pem ${CA}/certificates/${CANAME}.pem
+ln -s ${CANAME}.pem ${CA}/certificates/${cahash}.0
+
+# Signing policy
+cat > ${CA}/certificates/${CANAME}.signing_policy << EOF
+# Internal canet X.509 authority
+access_id_CA      X509     '${BASEDN}/CN=${CANAME}'
+pos_rights        globus   CA:sign
+cond_subjects     globus   '"${BASEDN}/CN=${CANAME}" "${BASEDN}/OU=${MYPROXYOU}/CN=*" "${BASEDN}/OU=${APACHEOU}/CN=*"'
+EOF
+ln -s ${CANAME}.signing_policy ${CA}/certificates/${cahash}.signing_policy
+
+# CRL: Create empty longlived CRL
+openssl ca -gencrl -out ${CA}/certificates/${cahash}.r0
+
+# Open up certificates directory
+chmod a+rx ${CA}/certificates/
+chmod a+r ${CA}/certificates/*
+
 
 # Function to create different hostcert directories and their content
 createcert() {
     export HOST=$1
 
     mkdir -p ${CA}/${HOST}/certificates
-# Create request
-    openssl req -new -batch -nodes -newkey rsa \
-        -keyout ${CA}/${HOST}/hostkey.pem -out ${CA}/certreq.pem \
-        -subj "${BASEDN}/CN=$HOST"
-    if [ $? -ne 0 ];then
-        echo "Making request failed, check ${CA}" >&2
-        exit 1
-    fi
-# Sign certificate
-    openssl ca -batch -notext -out ${CA}/${HOST}/hostcert.pem \
-        -in ${CA}/certreq.pem -preserveDN
-    if [ $? -ne 0 ];then
-        echo "Signing certificate failed, check ${CA}" >&2
-        exit 1
-    fi
-    # Remove request
-    rm ${CA}/certreq.pem
+
+    for ou in myproxy apache;do
+	# Create request for cert
+	openssl req -new -batch -nodes -newkey rsa \
+	    -keyout ${CA}/${HOST}/${ou}key.pem -out ${CA}/certreq.pem \
+	    -subj "${BASEDN}/OU=${ou}/CN=$HOST"
+	if [ $? -ne 0 ];then
+	    echo "Making request failed, check ${CA}" >&2
+	    exit 1
+	fi
+	# Sign certificate
+	openssl ca -batch -notext -out ${CA}/${HOST}/${ou}cert.pem \
+	    -in ${CA}/certreq.pem -preserveDN
+	if [ $? -ne 0 ];then
+	    echo "Signing certificate failed, check ${CA}" >&2
+	    exit 1
+	fi
+	# Remove request
+	rm ${CA}/certreq.pem
+    done
 
     # Copy/create CA files
-    cp -p ${CA}/cacert.pem ${CA}/${cahash}.r0 ${CA}/${HOST}/certificates/
-    ln -s cacert.pem ${CA}/${HOST}/certificates/${cahash}.0
-    cat > ${CA}/${HOST}/certificates/${cahash}.signing_policy << EOF
-# Internal canet X.509 authority
- access_id_CA      X509     '${BASEDN}/CN=CANET-rootCA'
- pos_rights        globus   CA:sign
- cond_subjects     globus   '"${BASEDN}/CN=CANET-rootCA" "${BASEDN}/CN=*"'
-EOF
+    cp -pR ${CA}/certificates ${CA}/${HOST}
 
-    # Open certificates directory
-    chmod a+rx ${CA}/${HOST}/certificates/
-    chmod a+r ${CA}/${HOST}/certificates/*
-
-    # Make a tarball
+    # Make host-tarball: contains hostcert/key and certificates directory
     tarball=${CA}/${HOST}.tgz
-    tar -zcf ${tarball} -C ${CA}/$HOST certificates hostcert.pem hostkey.pem || {
+    tar -zcf ${tarball} -C ${CA}/$HOST certificates {myproxy,apache}{cert,key}.pem || {
         echo "Creating tarball ${tarball} failed" >&2
         exit 1
     }
 
-    # Remove all but the hostcert itself
-    rm -rf ${CA}/${HOST}/certificates/ ${CA}/${HOST}/hostkey.pem
+    # Remove all but the hostcerts itself
+    rm -rf ${CA}/${HOST}/certificates/ ${CA}/${HOST}/{myproxy,apache}key.pem
 
     echo "$HOST files left in ${tarball}";echo
     unset HOST
 }
 
 if [ "$CAHOST" != "$FRHOST" ];then
-    # Create myproxy server (online CA) hostcert/key
+    # Create backend CAs (online CA) myproxy server and apache client credentials
     createcert $CAHOST
 fi
 
@@ -158,5 +176,6 @@ fi
 createcert $FRHOST
 
 # Remove CA files, including private key
-rm ${CA}/{newcerts/??.pem,cacert.pem,private/cakey.pem,index.txt*,serial*,${cahash}.r0,openssl.cnf}
-rmdir ${CA}/{newcerts,private}
+rm ${CA}/{newcerts/??.pem,cacert.pem,private/cakey.pem,index.txt*,serial*,openssl.cnf}
+rm ${CA}/certificates/{${CANAME}.pem,${CANAME}.signing_policy,${cahash}.*}
+rmdir ${CA}/{newcerts,private,certificates}

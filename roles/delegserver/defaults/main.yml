@@ -29,6 +29,9 @@ index_html_template: index_democa.html.j2
 
 contact: "root@localhost"
 
+### idphint cookie domain, should typically match the WAYF's domain
+### Note that it normally only works when it also matches our domain.
+idphint_cookie_domain: ".rcauth.eu"
 
 ### Shibboleth settings: you MUST override (most) of these
 
@@ -100,3 +103,23 @@ mail_use_SSL: "false"
 mail_debug: "true"
 mail_message_template: "{{ oa4mp_server_conf_dir }}/mail_message.template"
 mail_subject_template: "{{ oa4mp_server_conf_dir }}/mail_subject.template"
+
+### Internal CAs credentials
+private_creds_dir: /etc/grid-security/canet
+private_creds_capath: "{{ private_creds_dir }}/certificates"
+private_creds_tarball: "{{ private_dscreds_tarball }}"
+
+### Settings for revoking certs from frontend
+revoke_dir: /var/lib/revokes
+revoke_pfx: revoke_
+revoke_dir_webroot: "{{ revoke_dir }}/webroot"
+revoke_latest: "index.html"
+revoke_httpd_log: logs/revokes_log
+revoke_httpd_loglevel: notice
+# Credentials
+# The private credentials tarball has a set for myproxy and for apache
+revoke_hostcert: "{{ private_creds_dir }}/apachecert.pem"
+revoke_hostkey: "{{ private_creds_dir }}/apachekey.pem"
+# script
+revoke_cert_script: /usr/local/sbin/revoke_cert.sh
+

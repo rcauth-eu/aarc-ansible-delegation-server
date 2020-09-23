@@ -1,0 +1,34 @@
+# Note: best to specify just IP address
+Listen {{ private_ds_address }}:{{ private_revokelist_port }}
+
+# Note: best to specify just IP address, note that the first entry for this port
+# will become the default host configuration.
+<VirtualHost {{ private_ds_address }}:{{ private_revokelist_port }}>
+    ErrorLog {{ revoke_httpd_log }}
+    LogLevel {{ revoke_httpd_loglevel }}
+
+    ServerName {{ private_ds_fqdn }}
+
+    DocumentRoot {{ revoke_dir_webroot }}
+
+    SSLEngine on
+    SSLProtocol all -SSLv2 -SSLv3 +TLSv1
+    SSLCertificateFile {{ revoke_hostcert }}
+    SSLCertificateKeyFile {{ revoke_hostkey }}
+    SSLCACertificatePath {{ private_creds_capath }}
+
+    SSLVerifyClient require
+</VirtualHost>
+
+<Directory "{{ revoke_dir_webroot }}">
+    AllowOverride None
+    Options FollowSymLinks
+    Require all denied
+    <RequireAll>
+	Require expr %{SSL_CLIENT_S_DN_C} == "{{ private_ca_country }}" \
+		  && %{SSL_CLIENT_S_DN_O} == "{{ private_ca_org }}" \
+		  && %{SSL_CLIENT_S_DN_OU} == "{{ private_ca_apache_ou }}" \
+		  && %{SSL_CLIENT_S_DN_CN} =~ /^{{ private_ca_fqdn }}$/
+	Require ip {{ private_ca_address }}
+    </RequireAll>
+</Directory>

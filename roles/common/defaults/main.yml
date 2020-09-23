@@ -65,6 +65,7 @@ ntp_servers:
 ### whether we use a demo CA. Can be based on the demoCA's O and OU set below.
 #ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
 
+
 ########################################################################
 ### Normally there is no need to override any of the following
 ########################################################################
@@ -82,7 +83,9 @@ private_ca_fqdn: "{{ private_ca_hostname }}.{{ private_domain }}"
 ### Hostcert CA for the private network
 private_ca_country: NL
 private_ca_org: CANET
-private_ca_basedn: "O={{ private_ca_org }},C={{ private_ca_country }}"
+private_ca_myproxy_ou: myproxy
+private_ca_myproxy_basedn: "OU={{ private_ca_myproxy_ou }},O={{ private_ca_org }},C={{ private_ca_country }}"
+private_ca_apache_ou: apache
 
 private_dscreds_tarball: "/root/{{ private_ds_fqdn }}.tgz"
 
@@ -95,6 +98,10 @@ ca_backup_home: "/var/lib/{{ ca_backup_user }}"
 ca_backup_backup: "{{ ca_backup_home }}/backup"
 
 ca_backup_pubkey_input: "/root/authorized_keys"
+
+## Apache portnumber for to-be-revoked list on frontend
+private_revokelist_port: 8443
+
 
 ### MyProxy CA: these settings are only used when running the demoCA
 democa_name: demoCA
