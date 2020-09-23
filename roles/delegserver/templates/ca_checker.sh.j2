@@ -4,6 +4,7 @@ PATH={{ cron_path }}
 
 # our default and backup backend CA IP address
 CAIP={{ private_ca_address }}
+ALTCAIP={{ private_ca_address_other }}
 
 # email recipient
 RECIPIENT={{ contact }}
@@ -18,8 +19,11 @@ TESTCMD="VERSION=MYPROXYv2\nCOMMAND=2\nUSERNAME=CA TEST\nPASSPHRASE=\nLIFETIME=0
 TESTPORT={{ private_ca_port }}
 
 # State file's directory and state file itself
-STATE_DIR=/var/cache/ca_checker
-STATE_FILE=${STATE_DIR}/state
+STATE_DIR={{ ca_checker_state_dir }}
+STATE_FILE={{ ca_checker_state_file }}
+# Using_backup is created when we start using the backup backend which allows us
+# to act differently in the ping_ca cronjob.
+USING_BACKUP_FILE={{ ca_checker_using_backup_file }}
 
 send_mail() {
     # send mail about the state change
@@ -51,16 +55,22 @@ OPENSSL_RET=$?
 if [ ${OPENSSL_RET} -eq 0 ];then
     # All is fine with default backend, check whether this is new
     if [ -n "${STATE}" -a "${STATE}" != "${OUTPUT}" ]; then
-        # State changed from error to good
-        # inform the sysadmins
-        send_mail "CA backend ${CAIP} is up again" "${OUTPUT}"
+        # State changed from error to good: revert hostname line for backend
+        sed -i "s/^${ALTCAIP}\(\s\+ca\.canet.*\)$/${CAIP}\1/" /etc/hosts
+        # Remove the using_backup file
+        rm -f $USING_BACKUP_FILE
+        # Inform the sysadmins
+        send_mail "switched back to CA backend ${CAIP}" "${OUTPUT}"
     fi
 else
     # default backend is broken
     if [ -z "${STATE}" -o "${STATE}" != "${OUTPUT}" ];then
-        # State changed from good to error
-        # inform the sysadmins
-        send_mail "CA backend ${CAIP} is BROKEN" "${OUTPUT}"
+        # State changed from good to error: update hostname for backend
+        sed -i "s/^${CAIP}\(\s\+ca\.canet.*\)$/${ALTCAIP}\1/" /etc/hosts
+        # Create the using_backup file
+        touch $USING_BACKUP_FILE
+        # Inform the sysadmins
+        send_mail "switched to CA backend ${ALTCAIP}" "${OUTPUT}"
     fi
 fi
 

@@ -1,0 +1,83 @@
+#!/bin/sh
+
+PATH={{ cron_path }}
+
+# Remote defaults
+replicatemasterhost={{ replicate_masterhost }}
+replicateport={{ private_replicate_port }}
+replicatelatest={{ replicate_latest }}
+# curl settings
+timeout={{ replicate_curl_timeout }}
+curluser={{ replicate_curl_user }}
+curlgroup={{ replicate_curl_group }}
+# Client credentials
+clientcert={{ replicate_clientcert }}
+clientkey={{ replicate_clientkey }}
+capath={{ replicate_capath }}
+# Local file defaults
+replicatedir={{ replicate_dir }}
+replicatepfx={{ replicate_pfx }}
+replicatesuffix=.sql.gz
+
+
+# Function running curl as a special user
+curl_cmd()  {
+    # NOTE: use -f flag to fail on server errors without printing error page on
+    # stdout.
+    runuser $curluser -g $curlgroup -l -s /bin/sh -c \
+    "curl -fsS \
+	--connect-timeout ${timeout} \
+	--cert ${clientcert} \
+	--key ${clientkey} \
+	--capath ${capath} \
+	https://${replicatemasterhost}:${replicateport}/${replicatelatest}"
+}
+
+# Output directory
+if [ ! -d "$replicatedir" ];then
+    mkdir -p $replicatedir
+fi
+replicatenew=${replicatedir}/${replicatepfx}$(date +%Y%m%d%H%M%S)${replicatesuffix}
+if [ -f "$replicatenew" ];then
+    echo "ERROR: new replicate file $replicatenew already exists" >&2
+    exit 1
+fi
+
+# Download the latest remote
+curl_cmd > $replicatenew || {
+    echo "ERROR: curl failed with exit value $?" >&2
+    rm -f $replicatenew
+    exit 1
+}
+
+# Do rudimentary test
+if ( file $replicatenew | grep -q "gzip compressed" ) && \
+   ( gunzip -c $replicatenew|head -1|egrep -q "MySQL dump|MariaDB dump" )
+then
+    # Source mysql password...
+    . /etc/mysql
+    # ... and restore the database
+    (
+	echo "SET AUTOCOMMIT=0;"
+	echo "SET UNIQUE_CHECKS=0;"
+	echo "SET FOREIGN_KEY_CHECKS=0;"
+	gunzip -dc $replicatenew
+	echo "SET FOREIGN_KEY_CHECKS=1;"
+	echo "SET UNIQUE_CHECKS=1;"
+	echo "SET AUTOCOMMIT=1;"
+	echo "COMMIT;"
+    ) | mysql -u root --password="$PW" {{ oa4mp_server_db }} || {
+	echo "ERROR: importing database from $replicatenew failed" >&2
+	# Don't clean up so that we can check what went wrong
+	exit 1
+    }
+
+    # Remove all older dumps
+    find "$replicatedir" -type f -name ${replicatepfx}\*${replicatesuffix} \
+	-not -newer $replicatenew -not -samefile $replicatenew -exec rm {} \;
+else
+    # New file is not gzipped, seems invalid
+    echo "ERROR: new replicate file $replicatenew is not gzipped, NOT importing" >&2
+    # Don't clean up so that we can check what went wrong
+    exit 1
+fi

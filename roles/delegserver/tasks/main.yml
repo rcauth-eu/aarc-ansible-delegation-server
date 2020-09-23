@@ -36,6 +36,7 @@
 ### additional tasks involving the apache webserver
 
 - import_tasks: revoke-frontend.yml
+- import_tasks: mysql-replicate.yml
 
 ### enable services
 

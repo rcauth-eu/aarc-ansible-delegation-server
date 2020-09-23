@@ -1,0 +1,16 @@
+# Master node runs every {{ replicate_interval }} mysql_replicate_save script,
+# Slave node runs every {{ replicate_interval }} mysql_replicate_restore script.
+# Make sure to comment in/out the right entries.
+
+{%- if replicate_is_master %}
+# Next line is for Master
+0-59/{{ replicate_interval }} * * * * root {{ replicate_save_script }} > /dev/null
+# Next line is for Slave
+#1-59/{{ replicate_interval }} * * * * root {{ replicate_restore_script }} > /dev/null
+
+{% else %}
+# Next line is for Master
+#0-59/{{ replicate_interval }} * * * * root {{ replicate_save_script }} > /dev/null
+# Next line is for Slave
+1-59/{{ replicate_interval }} * * * * root {{ replicate_restore_script }} > /dev/null
+{% endif %}

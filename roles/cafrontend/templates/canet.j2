@@ -6,8 +6,26 @@ bogus-priv
 # squid) we need it for e.g. installing RPM keys directly.
 #no-resolv
 
-mx-target={{ private_ds_hostname }}.{{ private_domain }}
+#mx-target={{ private_ds_fqdn }}
 localmx
+mx-host={{ private_ca_fqdn }},{{ private_mx_default }},10
+mx-host={{ private_ca_fqdn }},{{ private_mx_backup }},20
+
+mx-host={{ private_ca_fqdn1 }},{{ private_mx_default }},10
+mx-host={{ private_ca_fqdn1 }},{{ private_mx_backup }},20
+
+mx-host={{ private_ca_fqdn2 }},{{ private_mx_default }},10
+mx-host={{ private_ca_fqdn2 }},{{ private_mx_backup }},20
+
+mx-host={{ private_ds_fqdn }},{{ private_mx_default }},10
+mx-host={{ private_ds_fqdn }},{{ private_mx_backup }},20
+
+mx-host={{ private_ds_fqdn1 }},{{ private_mx_default }},10
+mx-host={{ private_ds_fqdn1 }},{{ private_mx_backup }},20
+
+mx-host={{ private_ds_fqdn2 }},{{ private_mx_default }},10
+mx-host={{ private_ds_fqdn2 }},{{ private_mx_backup }},20
+
 
 #log-dhcp
 #log-queries

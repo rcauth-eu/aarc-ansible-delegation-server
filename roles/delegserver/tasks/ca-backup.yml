@@ -19,9 +19,10 @@
     group: "{{ ca_backup_user }}"
     mode: 0700
 
-- name: copy ssh pubkey to authorized_keys file
-  copy:
-    src: "{{ ca_backup_pubkey_input }}"
+- name: add ssh pubkeys to authorized_keys file
+  assemble:
+    src: "{{ ca_backup_pubkey_input_dir }}"
+    regexp: "{{ ca_backup_pubkey_input_filepattern }}"
     dest: "{{ ca_backup_home }}/.ssh/authorized_keys"
     remote_src: yes
     owner: "{{ ca_backup_user }}"
@@ -37,5 +38,5 @@
     dest: "/etc/security/access.conf"
     insertbefore: '^- : ALL : ALL'
     regexp: "^.*: {{ ca_backup_user }} :"
-    line: "+ : {{ ca_backup_user }} : {{ private_ca_address }}"
+    line: "+ : {{ ca_backup_user }} : {{ private_ca_network }}"
     backup: yes

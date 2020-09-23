@@ -25,10 +25,10 @@ Listen {{ private_ds_address }}:{{ private_revokelist_port }}
     Options FollowSymLinks
     Require all denied
     <RequireAll>
-	Require expr %{SSL_CLIENT_S_DN_C} == "{{ private_ca_country }}" \
-		  && %{SSL_CLIENT_S_DN_O} == "{{ private_ca_org }}" \
-		  && %{SSL_CLIENT_S_DN_OU} == "{{ private_ca_apache_ou }}" \
-		  && %{SSL_CLIENT_S_DN_CN} =~ /^{{ private_ca_fqdn }}$/
-	Require ip {{ private_ca_address }}
+        Require expr %{SSL_CLIENT_S_DN_C} == "{{ private_ca_country }}" \
+                  && %{SSL_CLIENT_S_DN_O} == "{{ private_ca_org }}" \
+                  && %{SSL_CLIENT_S_DN_OU} == "{{ private_ca_apache_ou }}" \
+                  && %{SSL_CLIENT_S_DN_CN} =~ /^{{ private_ca_hostname }}[1-9]*.{{ private_domain }}$/
+        Require ip {{ private_ca_network }}
     </RequireAll>
 </Directory>

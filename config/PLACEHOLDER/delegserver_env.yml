@@ -126,6 +126,12 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 #myproxy_cert: "{{ private_creds_dir }}/myproxycert.pem"
 #myproxy_key: "{{ private_creds_dir }}/myproxykey.pem"
 
+### Settings for ca_checker
+#ca_checker_script: /usr/local/sbin/ca_checker.sh
+#ca_checker_state_dir: /var/cache/ca_checker
+#ca_checker_state_file: "{{ ca_checker_state_dir }}/state"
+#ca_checker_using_backup_file: "{{ ca_checker_state_dir }}/using_backup"
+
 ### Settings for revoking certs from frontend
 #revoke_logfacility: auth
 #revoke_logtag: revocation
@@ -158,4 +164,33 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 #curl_user: nobody
 #curl_group: nobody
 crl_frontends: "ds1.example.org ds2.example.org"
-#crl_backends: "{{ private_ca_fqdn }}"
+#crl_backends: "{{ private_ca_fqdn1 }} {{ private_ca_fqdn2 }}"
+
+
+### Override some settings for mysql replication from frontend
+# variable determining whether we're master or slave
+replicate_is_master: true
+# Local defaults
+# next one only used when we're not master, so typically the other DS
+replicate_masterhost: "{{ private_ds_fqdn2 }}"
+#replicate_dir: /var/lib/replicate
+#replicate_pfx: replicate_
+#replicate_dir_webroot: "{{ replicate_dir }}/webroot"
+#replicate_latest: "latest.sql.gz"
+#replicate_httpd_log: logs/replicate_log
+#replicate_httpd_loglevel: notice
+# The private credentials tarball has a set for myproxy and for apache
+#replicate_servercert: "{{ private_creds_dir }}/apachecert.pem"
+#replicate_serverkey: "{{ private_creds_dir }}/apachekey.pem"
+#replicate_clientcert: "{{ private_creds_dir }}/clientcert.pem"
+#replicate_clientkey: "{{ private_creds_dir }}/clientkey.pem"
+#replicate_capath: "{{ private_creds_dir }}/certificates"
+# scripts
+#replicate_save_script: /usr/local/sbin/mysql_replicate_save.sh
+#replicate_restore_script: /usr/local/sbin/mysql_replicate_restore.sh
+# How often (in min.) to run the replication scripts
+#replicate_interval: 10
+# curl settings (client)
+#replicate_curl_timeout: 2
+#replicate_curl_user: "{{ curl_user }}"
+#replicate_curl_group: "{{ curl_group }}"

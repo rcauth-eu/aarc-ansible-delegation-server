@@ -12,5 +12,6 @@ smtp_server: smtp.example.org
 #luser_relay: $local@{{ smtp_server }}
 ### where to send root's email to
 root_alias: "ca-operator@example.org, /var/spool/mail/root"
-# postfix_mydestinations
-#postfix_mydestinations: "{{ private_ds_hostname }}, {{ private_ds_fqdn }}, {{ private_domain }}, {{ inventory_hostname }}"
+# postfix_mydestinations needs to be set separately in the config/*/cafrontend_env.yml since
+# it contains its own private_ds_fqdnX hostname
+postfix_mydestinations: "{{ private_ds_hostname }}, {{ private_ds_fqdn }}, {{ private_ds_hostname1 }}, {{ private_ds_fqdn1 }}, {{ private_domain }}, {{ inventory_hostname }}"

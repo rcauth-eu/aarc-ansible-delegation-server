@@ -5,14 +5,15 @@
 - name: copy ca_checker to sbin
   template:
     src: ca_checker.sh.j2
-    dest: /usr/local/sbin/ca_checker.sh
+    dest: "{{ ca_checker_script }}"
     owner: root
     group: root
     mode: 0755
+    backup: yes
 
 - name: add cron job to run ca_checker script
   file:
-     src: /usr/local/sbin/ca_checker.sh
+     src: "{{ ca_checker_script }}"
      dest: /etc/cron.hourly/ca_checker.cron
      owner: root
      state: link
@@ -25,4 +26,4 @@
     cron_file: ping_ca
     user: root
     minute: "*"
-    job: "/usr/bin/ping -c1 -w1 {{ private_ca_address }} > /dev/null 2>&1 || /usr/local/sbin/ca_checker.sh"
+    job: "{ ! /usr/bin/ping -c1 -w1 {{ private_ca_address }} > /dev/null 2>&1 || test -f {{ ca_checker_using_backup_file }}; } && {{ ca_checker_script }}"
