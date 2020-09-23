@@ -43,13 +43,21 @@ private_ca_address: 192.168.1.1
 
 ### Backup Server configuration: defines hosts allowed to rsync from DS
 #rsync_path: /
-#rsync_hosts: 1.2.3.8/32
+#rsync_hosts:
+#   - 1.2.3.8/32
+
+#rsync_hosts_v6:
+#   - 1234::1/128
 
 
 ### NTP Server
 ntp_servers:
   - 0.pool.ntp.org
   - 1.pool.ntp.org
+
+
+### Central syslog server
+#central_syslog_server: 1.2.3.4
 
 
 ### CA BaseDN in LDAP format, must be set to the correct value corresponding

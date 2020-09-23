@@ -1,0 +1,15 @@
+# Provides UDP syslog reception
+$ModLoad imudp
+$UDPServerRun 514
+
+# Use template to prefix remote hostnames with ourselves
+template(name="hostprefixer" type="string" string="%HOSTNAME%.%$myhostname%")
+
+if $fromhost == "$$myhostname" then
+    set $!myhostname = "$$myhostname";
+else
+    set $!myhostname = exec_template("hostprefixer");
+
+# Define MyLogFormat matching RSYSLOG_TraditionalFileFormat which is used as
+# $ActionFileDefaultTemplate
+$template MyLogFormat,"%timegenerated% %$!myhostname% %syslogtag%%msg:::drop-last-lf%\n"

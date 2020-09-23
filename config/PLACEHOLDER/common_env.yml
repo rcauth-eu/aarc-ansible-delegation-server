@@ -48,6 +48,11 @@ ntp_servers:
   - 1.pool.ntp.org
 
 
-### CA BaseDN in LDAP format, set to the correct value corresponding with the CA
-### Only used by delegserver, easier to set here since we know whether we use a demo CA
+### Central syslog server
+#central_syslog_server: 1.2.3.4
+
+
+### CA BaseDN in LDAP format, must be set to the correct value corresponding
+### with the CA. Only used by delegserver, easier to set here since we know
+### whether we use a demo CA. Can be based on the demoCA's O and OU set below.
 ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"

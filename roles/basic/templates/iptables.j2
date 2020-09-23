@@ -40,6 +40,7 @@
 -A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 3128 -j ACCEPT
 -A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 53 -j ACCEPT
 -A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 123 -j ACCEPT
+-A RH-FW-1-INPUT -i {{ private_ds_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 514 -j ACCEPT
 {% endif %}{# inventory_hostname == groups.delegserver.0 #}
 #
 {% if inventory_hostname == groups.democa.0 %}
@@ -90,6 +91,7 @@
 -A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p tcp --dport 3128 -j ACCEPT
 -A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 53 -j ACCEPT
 -A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 123 -j ACCEPT
+-A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -d {{ private_ds_address }} -p udp --dport 514 -j ACCEPT
 # Next rules are ok since it's a demoCA
 -A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -p tcp --sport 22 -j ACCEPT
 -A OUTPUT-FILTER -o {{ private_ca_interface }} -s {{ private_ca_address }} -p tcp --dport 443 -j ACCEPT

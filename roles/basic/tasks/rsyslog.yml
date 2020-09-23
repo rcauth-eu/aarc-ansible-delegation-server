@@ -1,0 +1,28 @@
+---
+
+# Setup remote rsyslog: we do this in the basic role since it affects both the
+# cafrontend (receiving setup) and the generic host
+
+- name: add listening section for remote rsyslog
+  template:
+    src: rsyslog_receive.conf.j2
+    dest: /etc/rsyslog.d/rsyslog_receive.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart rsyslog
+
+# NOTE: make sure the dest of the sending conf is ordered after that of the
+# receiving part above, since the latter creates a new template used by the
+# latter. Also note that we install an NO-OP config in case
+# central_syslog_server is not defined
+- name: add sending section for remote rsyslog
+  template:
+    src: rsyslog_send.conf.j2
+    dest: /etc/rsyslog.d/rsyslog_send.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart rsyslog

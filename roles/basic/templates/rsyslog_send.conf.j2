@@ -1,0 +1,8 @@
+# Use our template (see rsyslog_receive.conf) for forwarding syslog. Note
+# therefore this config needs to have a name > than 'rsyslog_receive.conf'
+# E.g.:
+# *.* @1.2.3.4:514;MyLogFormat
+#
+{% if central_syslog_server is defined %}
+*.* @{{ central_syslog_server }}:514;MyLogFormat
+{% endif %}

@@ -12,6 +12,7 @@
 - import_tasks: iptables.yml
 - import_tasks: access.yml
 - import_tasks: ntpd.yml
+- import_tasks: rsyslog.yml
 
 # list of disabled services
 # need to stop e.g. firewalld before starting iptables
