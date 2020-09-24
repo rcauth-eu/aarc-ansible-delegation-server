@@ -16,6 +16,8 @@ general_packages:
   - authconfig
   - smartmontools
   - ipmitool
+  # yum-utils needed for repoquery used by ansible's yum list
+  - yum-utils
 
 ### list of enabled and disabled services
 
