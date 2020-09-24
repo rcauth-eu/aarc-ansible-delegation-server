@@ -5,8 +5,8 @@
 secrets_env.yml
 
 # Do not accidentally add the host cert/key
-/roles/delegserver/files/*.key
-/roles/delegserver/files/*.crt
+/roles/delegserver/files/*.key*
+/roles/delegserver/files/*.crt*
 
 # Do not accidentally add the JSON web keys
 /roles/delegserver/files/*.jwk
