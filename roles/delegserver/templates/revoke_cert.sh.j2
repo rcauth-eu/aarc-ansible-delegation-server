@@ -6,7 +6,7 @@ revokequeuedir={{ revoke_queue_dir }}
 # Check command line argument(s)
 if [ $# -lt 1 ];then
     echo "Usage: $(basename $0) <hex serial(s)>" >&2
-    exit 0
+    exit 1
 fi
 
 # Set umask
