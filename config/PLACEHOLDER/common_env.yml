@@ -71,7 +71,7 @@ ca_baseDN: "OU={{ democa_ou }},O={{ democa_o }}"
 
 
 ### the ca_backup_backup directory
-#ca_backup_backup: "{{ ca_backup_home }}/backup"
+#ca_backup_backup: "{{ ca_backup_home }}/{{ private_ca_fqdn }}"
 
 
 ### top-level directory (without full-path) for the CA, underneath ca_backup_backup

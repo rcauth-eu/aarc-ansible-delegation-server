@@ -11,6 +11,14 @@
     group: root
     mode: 0755
 
+- name: create revoke queue dir
+  file:
+    path: "{{ revoke_queue_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
 - name: create revoke webroot dir
   file:
     path: "{{ revoke_dir_webroot }}"
@@ -44,8 +52,7 @@
   when: revoke_latest_link.stat.islnk is not defined
 
 # Setup the host credentials for this part
-
-- name: ensure hostkey is closed
+- name: ensure revoke hostkey is closed
   file:
     path: "{{ revoke_hostkey }}"
     mode: 0400
@@ -61,7 +68,7 @@
     backup: yes
   notify: restart httpd
 
-# Install the script
+# Install the scripts
 - name: install revoke_cert script
   template:
     src: revoke_cert.sh.j2
@@ -70,3 +77,21 @@
     group: root
     mode: 0755
     backup: yes
+
+- name: install revocation script
+  template:
+    src: revocation.sh.j2
+    dest: "{{ revoke_revocation_script }}"
+    owner: root
+    group: root
+    mode: 0755
+    backup: yes
+
+# Add main cronjob
+- name: add cron job to run revocation script
+  cron:
+    name: "Handle new revokes and update latest CRLs for backend and public"
+    cron_file: revocation
+    user: root
+    job: "{{ revoke_revocation_script }}"
+

@@ -10,23 +10,6 @@
     group: root
     mode: 0644
 
-# publish last CRL to web root with cron
-
-- name: copy cronjob to sbin
-  template:
-    src: crl_publish.sh.j2
-    dest: /usr/local/sbin/crl_publish.sh
-    owner: root
-    group: root
-    mode: 0744
-
-- name: add cron job to run crl_publish script
-  cron:
-    name: "Copy CRLs every minute to webroot for publishing"
-    cron_file: crl_publish
-    user: root
-    job: "/usr/local/sbin/crl_publish.sh"
-
 # Next three steps are only relevant for a (demo)ca tarball
 
 - name: check existence of a demoCA tarball

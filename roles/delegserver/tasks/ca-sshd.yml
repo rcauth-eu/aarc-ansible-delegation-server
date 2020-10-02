@@ -4,6 +4,16 @@
 # for the backend. Here they are again disabled.
 # Note that the basic role sets the overall policy to disabled.
 
+# disable ssh access for root from backends
+- name: remove ssh access for root from backend
+  lineinfile:
+    dest: "/etc/security/access.conf"
+    regexp: "^[#]*(.*: root : {{ private_ca_address }}.*)$"
+    backrefs: yes
+    line: '#\1'
+    backup: yes
+  when: not private_ca_address == private_ds_address
+
 # Add specific block for password-based logins from the CA
 - name: disable ssh password logins for backend
   blockinfile:

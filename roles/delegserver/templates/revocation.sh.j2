@@ -1,0 +1,396 @@
+#!/bin/bash
+
+####################
+# DEFAULT VARIABLES
+####################
+
+# as a cron job we typically need to set PATH
+PATH={{ cron_path }}
+
+# script logs via syslog
+logfacility={{ revoke_logfacility }}
+logtag={{ revoke_logtag }}
+
+# list of remote frontends used for obtaining CRL and new revoke lists
+frontends="{{ crl_frontends }}"
+# list of backends used for obtaining CRL
+backends="{{ crl_backends }}"
+
+# permissions of potential webroot files. Note that mktemp ignores umask
+perms=0644
+# main state directory
+revokedir={{ revoke_dir }}
+# directory holding new to-be-revoked serials
+revokequeuedir={{ revoke_queue_dir }}
+# backend facing webroot
+revokewebroot={{ revoke_dir_webroot }}
+# prefix for revoke files
+revokepfx={{ revoke_pfx }}
+# symlink to the latest list of revoked entries
+revokelatest=${revokewebroot}/{{ revoke_latest }}
+
+# name of the CRL pem file
+crlpem={{ crl_pem }}
+# pubcrlfile is exposed to public internet
+pubcrlfile={{ crl_pub_webroot }}/${crlpem}
+# privcrlfile is exposed to backend for obtaining the highest serial
+privcrlfile=${revokewebroot}/${crlpem}
+# crlpfx is used to create the CRL files in $revokedir
+crlpfx={{ crl_pfx }}
+# used to create temporary entries files in $revokedir
+entriespfx={{ crl_entries_pfx }}
+# curl settings (connects towards public side of each frontend)
+timeout={{ curl_timeout }}
+curluser={{ curl_user }}
+curlgroup={{ curl_group }}
+capath={{ x509_cert_dir }}
+# where to find our local backups
+cabackupbase={{ ca_backup_home }}
+cadir={{ ca_topdir }}
+
+#################
+# HELPER METHODS
+#################
+
+# logging helper functions, using syslog using logtag and logfacility at
+# different loglevels.
+
+debug() {
+    logger -t $logtag -p ${logfacility}.debug "DEBUG: $*"
+}
+
+info()  {
+    logger -t $logtag -p ${logfacility}.info "$*"
+}
+
+notice()    {
+    logger -t $logtag -p ${logfacility}.notice "$*"
+}
+
+warn()  {
+    logger -t $logtag -p ${logfacility}.warning "WARNING: $*"
+}
+
+error() {
+    logger -t $logtag -p ${logfacility}.err "ERROR: $*"
+    exit 1
+}
+
+# Dump the certificate serials in $1 sorted and uniquefied to $2
+dump_serials()  {
+    openssl crl -noout -text -in "$1" |\
+        sed -n 's/^\s*Serial Number: //p' | sort -u >| "$2" 2> /dev/null
+    if [ $? -ne 0 ];then
+        # failure here means there is something serious wrong
+        error "cannot get certificate serials from \"$1\""
+    fi
+}
+
+# Returns decimal serial number of CRL $1
+get_dec_serial()    {
+    # initialize serial to safe value 0
+    serial=0
+    printf "%d" 0x$(openssl crl -crlnumber -noout -in "$1" |\
+        sed -n 's/^crlNumber=//p') 2> /dev/null
+    if [ $? -ne 0 ];then
+        # failure here means there is something serious wrong
+        error "cannot get CRL serial from \"$1\""
+    fi
+}
+
+# Compares file $2 against to $1 and sets global variables 'missing' and 'extra'
+# extra is how many are $2 that are not in $1, and missing is how many are not
+# in $2 that are in $1.
+get_missing_extra() {
+    # Note: our diff only outputs something when the files differ, so set the
+    # defaults here
+    missing=0
+    extra=0
+    eval $(diff --changed-group-format="missing=%dn; extra=%dN" \
+                --unchanged-group-format="" "$1" "$2")
+    if [ $? -ne 0 ];then
+        # failure here means there is something serious wrong
+        error "cannot get 'missing' and 'extra' from \"$1\" and \"$2\""
+    fi
+}
+
+# Runs curl to fetch the public CRLs as $curluser/group. On failure the errors
+# are logged as warning.
+curl_cmd()  {
+    curltmp=$(mktemp ${revokedir}/tmp_curlXXXXXX)
+    # NOTE: use -f flag to fail on server errors without printing error page on
+    # stdout.
+    runuser $curluser -g $curlgroup -l -s /bin/sh -c \
+    "curl -fsS \
+        --connect-timeout $timeout \
+        --capath $capath \
+        https://${1}/${crlpem}" 2> $curltmp
+    rc=$?
+    if [ -s $curltmp ];then
+        warn "cURL failed with: $(cat $curltmp)"
+    fi
+    # Tidy up our temporary error log
+    rm -f $curltmp
+    return $rc
+}
+
+########################
+# START OF MAIN PROGRAM
+########################
+
+# Set umask
+umask 0022
+
+# Create directories when needed
+if [ ! -d "$revokedir" ];then
+    mkdir -p $revokedir
+    notice "Created directory \"$revokedir\""
+fi
+if [ ! -d "$revokequeuedir" ];then
+    mkdir -p $revokequeuedir
+    notice "Created directory \"$revokequeuedir\""
+fi
+if [ ! -d "$revokewebroot" ];then
+    mkdir -p $revokewebroot
+    notice "Created directory \"$revokewebroot\""
+fi
+
+# Switch to a save working directory
+cd $revokedir
+
+# Get our current backend's FQDN to get to our cafile, which is used to verify
+# the CRLs. First try to get the IP address, if that succeeds the FQDN.
+my_backend_ip=$(getent -s files hosts {{ private_ca_fqdn }}|awk '{print $1}')
+if [ -z "$my_backend_ip" ];then
+    error "cannot find out my backend's IP address"
+fi
+my_backend_fqdn=$(getent -s files hosts "$my_backend_ip"|awk '{print $2}')
+if [ -z "$my_backend_fqdn" ];then
+    error "cannot find out my backend's FQDN"
+fi
+cafile=${cabackupbase}/${my_backend_fqdn}/${cadir}/cacert.pem
+
+
+# Start with updating all locally needed copies of input files
+
+# Update our local copies of remote CRLs (only when they verify)
+for frontend in $(echo $frontends);do
+    # variable pointing to our local copy
+    crlfile=${revokedir}/${crlpfx}${frontend}
+    # download remote CRL and update our local copy if it succeeds and verifies
+    crltmp=$(mktemp ${revokedir}/tmp_${crlpfx}XXXXXX)
+    if curl_cmd $frontend > $crltmp ;then
+        verify=$(openssl crl -CAfile $cafile -noout -in $crltmp 2>&1)
+        if [ "$verify" = "verify OK" ];then
+	    chmod $perms $crltmp
+            mv -f $crltmp $crlfile
+        else
+            # warn but don't fail
+            warn "ignoring invalid CRL from $frontend: $verify"
+            rm -f $crltmp
+        fi
+    else
+        # warn but don't fail
+        warn "ignoring unreachable frontend $frontend"
+        rm -f $crltmp
+    fi
+done
+
+# Update our local copies of local CRLs
+for backend in $(echo $backends);do
+    # variable pointing to our local copy
+    crlfile=${revokedir}/${crlpfx}${backend}
+    # copy local CRL using intermediate tmpfile to do an atomic replacement
+    crlsrcfile=${cabackupbase}/${backend}/${cadir}/${crlpem}
+    crltmp=$(mktemp ${revokedir}/tmp_${crlpfx}XXXXXX)
+    if cp -p $crlsrcfile $crltmp;then
+        chown root.root $crltmp
+        chmod $perms $crltmp
+        mv -f $crltmp $crlfile
+    else
+        warn "cannot copy CRL from $crlsrcfile to $crlfile"
+        rm -f $crltmp
+    fi
+done
+
+
+# Now create a tmpfile with all the different revoked certificate numbers.
+revoketmp=$(mktemp ${revokedir}/tmp_${revokepfx}XXXXXX)
+
+# First add the previous file
+if [ -f "$revokelatest" ];then
+    cat $revokelatest > $revoketmp
+fi
+
+# Next add all new revokes when applicable
+for f in $(find $revokequeuedir -type f -printf "%f\n");do
+    # Check it is a valid number, first remove and 0x or 0X
+    num=${f##0[xX]}
+    # Check the remainder consists of 0-9a-fA-F
+    if [ -n "${num//[0-9a-fA-F]/}" ];then
+        warn "ignoring and removing invalid serial $f from $revokequeuedir"
+    else
+        # Format the serial to be of the right OpenSSL length
+        printf "%0$(((1+$(printf "%X" 0x$num|wc -c))/2*2))X\n" 0x$num \
+	    >> $revoketmp
+    fi
+    # Remove handled input file
+    rm -f ${revokequeuedir}/$f
+done
+
+
+# Before we'll dump all the other entries to the revoke tmpfile, we first need
+# to obtain some information from our current public and private CRL files.
+
+# Current public CRL file: dump all entries to a tmpfile and get its serial.
+pubentriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
+if [ -f $pubcrlfile ];then
+    dump_serials $pubcrlfile $pubentriestmp
+    pubserial=$(get_dec_serial $pubcrlfile)
+else
+    pubserial=0
+fi
+
+# Current private CRL file: dump all entries to a tmpfile and get its serial.
+priventriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
+if [ -f $privcrlfile ];then
+    dump_serials $privcrlfile $priventriestmp
+    privserial=$(get_dec_serial $privcrlfile)
+else
+    privserial=0
+fi
+
+
+# Now start looking for the new public CRL file and the new private CRL file.
+# For the public one we'll look for the one with the most new entries (and
+# then highest serial). For the private one we'll look for the one with the
+# highest serial (and then with the least missing ones or the most extra ones if
+# none are missing).
+
+# initialize new pubcrl variable as the old one
+pubnewcrl=$pubcrlfile
+pubserialmax=$pubserial
+pubextramax=0
+
+# initialize new privcrl variable as an empty file.
+# Note that privextramax will be set before we actually need its value, but
+# saver to initialize as something large negative than 0.
+privnewcrl=/dev/null
+privserialmax=0
+privextramax=-32768
+
+entriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
+# Loop over all the CRL files from backends and frontends
+for crlfile in $(find $revokedir -type f -name ${crlpfx}\*);do
+    # dump all the entries sorted to a tmpfile and get serial
+    dump_serials $crlfile $entriestmp
+    serial=$(get_dec_serial $crlfile)
+
+    # First need to find the new public CRL file
+
+    # get 'missing' and 'extra' w.r.t. the current public CRL
+    get_missing_extra $pubentriestmp $entriestmp
+
+    # Only consider those CRLs that - w.r.t. our current public one - don't miss
+    # certs and that have higher serial than current public crl.
+    # We look for the maximum entries and within that the highest serial
+    if [ $missing -eq 0 -a $serial -gt $pubserial -a $extra -ge $pubextramax ]
+    then
+        # Update when either the number of entries or the serial is larger
+        if [ $extra -gt $pubextramax -o $serial -gt $pubserialmax ];then
+            pubnewcrl=$crlfile
+            pubserialmax=$serial
+            pubextramax=$extra
+        fi
+    fi
+
+    # Now find the new CRL file to indicate to our backend
+
+    # get 'missing' and 'extra' w.r.t. the current private file
+    get_missing_extra $priventriestmp $entriestmp
+
+    # if the new CRL misses some of ours, use -$missing as $extra, i.e. we use
+    # either the most extra (when none are missing) or the least missing.
+    if [ $missing -ne 0 ];then
+        extra=-$missing
+    fi
+
+    # do we find a bigger or equal serial?
+    if [ $serial -ge $privserialmax ];then
+        # update if serial is bigger or we have more entries (or missing less)
+        if [ $serial -gt $privserialmax -o $extra -gt $privextramax ];then
+            privnewcrl=$crlfile
+            privserialmax=$serial
+            privextramax=$extra # might be negative
+        fi
+    fi
+
+    # Add entries from $crlfile also to the new list of all entries
+    cat $entriestmp >> $revoketmp
+    truncate -s 0 $entriestmp # not per se needed but doesn't harm
+done
+# cleanup temporary entries files
+rm -f $entriestmp $pubentriestmp $priventriestmp
+
+
+# Now we can update our CRL files
+
+# Update the new public CRL when needed.
+# Note that pubcrlfile might not yet exist.
+if diff -q $pubcrlfile $pubnewcrl > /dev/null 2>&1 ;then
+    debug "No need to update public CRL file $pubcrlfile"
+    # ensure it has the right permissions
+    chmod $perms $pubcrlfile
+else
+    # Copy the input via an intermediate tmpfile to do an atomic replacement.
+    crltmp=$(mktemp ${pubcrlfile}.XXXXX)
+    cp -p $pubnewcrl $crltmp
+    chmod $perms $crltmp
+    mv -f $crltmp $pubcrlfile
+    notice "$pubcrlfile updated from $pubnewcrl"
+fi
+# Make sure to set permission of the public file correct in any case
+
+# towards our backend: update the new max serial CRL.
+# Note that pubcrlfile might not yet exist.
+if diff -q $privcrlfile $privnewcrl > /dev/null 2>&1 ;then
+    debug "No need to update private CRL file $privcrlfile"
+    # ensure it has the right permissions
+    chmod $perms $privcrlfile
+else
+    # Copy the input via an intermediate tmpfile to do an atomic replacement.
+    crltmp=$(mktemp ${privcrlfile}.XXXXX)
+    cp -p $privnewcrl $crltmp
+    chmod $perms $crltmp
+    mv -f $crltmp $privcrlfile
+    notice "$privcrlfile updated from $privnewcrl"
+fi
+
+
+# Build up the sorted revoke file for our backend
+revokesortedtmp=$(mktemp ${revokedir}/tmp_${revokepfx}XXXXXX)
+sort -u $revoketmp > $revokesortedtmp
+rm -f $revoketmp
+
+# Check wether something has changed
+if [ ! -f $revokelatest ] || ! diff -q $revokesortedtmp $revokelatest \
+    > /dev/null
+then
+    # Try to move the tmpfile into place
+    revokenew=${revokedir}/${revokepfx}$(date +%Y%m%d%H%M%S)
+    if [ -f "$revokenew" ];then
+	# If it already exists, we most probably have two scripts running
+	# simultaneously: warn, but just take the latest one.
+	warn "new revoke file $revokenew already exists, will overwrite"
+    fi
+    chmod $perms $revokesortedtmp
+    mv -f $revokesortedtmp $revokenew
+
+    # Make symlink for the new latest file
+    ln -sf $revokenew $revokelatest
+    notice "Symlink $revokelatest updated to point to new revoke list $revokenew"
+else
+    # Nothing changed, tidy up
+    rm -f $revokesortedtmp
+    debug "No new revoked certificates, $revokelatest still pointing to latest"
+fi

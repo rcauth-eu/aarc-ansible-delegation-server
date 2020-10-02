@@ -19,10 +19,10 @@
 
 # also regularly ping CA machine to prevent ARP problems
 
-- name: add cron job to ping CA
+- name: add cron job to ping CA and optionally run CA checker
   cron:
-    name: "ping CA every 4 minutes to remember MAC"
+    name: "ping CA every minute to remember MAC and run ca_checker on failure"
     cron_file: ping_ca
     user: root
-    minute: "*/4"
-    job: "/usr/bin/ping -c1 -w1 {{ private_ca_fqdn }} > /dev/null 2>&1"
+    minute: "*"
+    job: "/usr/bin/ping -c1 -w1 {{ private_ca_address }} > /dev/null 2>&1 || /usr/local/sbin/ca_checker.sh"

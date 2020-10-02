@@ -113,15 +113,25 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 #mail_subject_template: "{{ oa4mp_server_conf_dir }}/mail_subject.template"
 
 
+### path variable for cron jobs
+#cron_path: /sbin:/bin:/usr/sbin:/usr/bin
+
+
 ### Internal CAs credentials
 #private_creds_dir: /etc/grid-security/canet
 #private_creds_capath: "{{ private_creds_dir }}/certificates"
 
+### myproxy credentials
+#myproxy_cert: "{{ private_creds_dir }}/myproxycert.pem"
+#myproxy_key: "{{ private_creds_dir }}/myproxykey.pem"
 
 ### Settings for revoking certs from frontend
+#revoke_logfacility: auth
+#revoke_logtag: revocation
 #revoke_dir: /var/lib/revokes
-#revoke_pfx: revoke_
+#revoke_queue_dir: "{{ revoke_dir }}/queue"
 #revoke_dir_webroot: "{{ revoke_dir }}/webroot"
+#revoke_pfx: revoke_
 #revoke_latest: "index.html"
 #revoke_httpd_log: logs/revokes_log
 #revoke_httpd_loglevel: notice
@@ -129,5 +139,16 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 # The private credentials tarball has a set for myproxy and for apache
 #revoke_hostcert: "{{ private_creds_dir }}/apachecert.pem"
 #revoke_hostkey: "{{ private_creds_dir }}/apachekey.pem"
-# script
+# scripts
+#revoke_revocation_script: /usr/local/sbin/revocation.sh
 #revoke_cert_script: /usr/local/sbin/revoke_cert.sh
+# CRL related settings
+#crl_pem: crl.pem
+#crl_pub_webroot: "{{ httpd_web_root }}"
+#crl_pfx: crl_
+#crl_entries_pfx: entries_
+#curl_timeout: 10
+#curl_user: nobody
+#curl_group: nobody
+crl_frontends: "ds1.example.org ds2.example.org"
+#crl_backends: "{{ private_ca_fqdn }}"

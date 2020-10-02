@@ -4,7 +4,16 @@
 # for the backend. Here they are enabled to enable the CA to copy input.
 # Note that the basic role sets the overall policy to disabled.
 
-# Add specific block for password-based logins from the CA
+# enable ssh access for root from backends
+- name: enable ssh access for root from backends
+  lineinfile:
+    dest: "/etc/security/access.conf"
+    insertbefore: '^- : root : ALL'
+    regexp: "^.*: root : {{ private_ca_address }}"
+    line: "+ : root : {{ private_ca_address }}"
+    backup: yes
+
+# Add specific block for password-based logins from the CA backend machine
 - name: enable ssh password logins for backend
   blockinfile:
     dest: /etc/ssh/sshd_config
@@ -16,5 +25,6 @@
            # Enable pw authN here when updating the ssh keys
            PasswordAuthentication yes
            PermitRootLogin yes
+  # sshd handler is defined in the common role
   notify: restart sshd
   when: not private_ca_address == private_ds_address

@@ -3,6 +3,4 @@
 + : root : LOCAL 127.0.0.1 ::1 cron crond localhost.localdomain
 + : root :{% for host in trusted_nets %} {{ host }}{% endfor %} # IPv4
 + : root :{% for host in trusted_nets_v6 %} {{ host }}{% endfor %} # IPv6
-+ : root : {{ private_ca_address }} # Needed for pushing keys
-+ : {{ ca_backup_user }} : {{ private_ca_address }}
 - : ALL : ALL
