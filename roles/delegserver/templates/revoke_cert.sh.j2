@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Default variables
 revokequeuedir={{ revoke_queue_dir }}
@@ -22,21 +22,23 @@ cd $revokequeuedir
 # Add new revokes when applicable
 for arg in $*;do
     # Check it is a valid number
+    arg=${arg#0x}
     if [ "$(echo "$arg"|sed 's/[^0-9a-fA-F]\+//')" != "$arg" ];then
-	echo "Warning: skipping invalid hexadecimal number $arg" >&2
-	continue
+        echo "Warning: skipping invalid hexadecimal number $arg" >&2
+        continue
     fi
 
     # Prefix with 0x when needed
-    if echo "$arg" | grep -ivq "^0x";then
-	arg=0x$arg
-    fi
+    arg=0x${arg#0x}
+
     # Format the serial to be of the right OpenSSL length
     serial=$(printf "%0$(((1+$(printf "%X" $arg|wc -c))/2*2))X" $arg)
-    if [ -f $serial ];then
-	echo "Skipping already present serial $serial"
+    if [ -f "$serial" ];then
+        printf "Skipping already present serial 0x%s (=%d)\n" \
+            "$serial" "0x${serial}"
     else
-	echo "Adding serial $serial"
-	touch $serial
+        printf "Adding serial 0x%s (=%d)\n" \
+            "$serial" "0x${serial}"
+        touch "$serial"
     fi
 done

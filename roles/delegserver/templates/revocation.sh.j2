@@ -15,38 +15,54 @@ logtag={{ revoke_logtag }}
 frontends="{{ crl_frontends }}"
 # list of backends used for obtaining CRL
 backends="{{ crl_backends }}"
+# alias for the backend
+backend_alias={{ private_ca_fqdn }}
 
 # permissions of potential webroot files. Note that mktemp ignores umask
 perms=0644
 # main state directory
 revokedir={{ revoke_dir }}
 # directory holding new to-be-revoked serials
-revokequeuedir={{ revoke_queue_dir }}
+queuedir={{ revoke_queue_dir }}
 # backend facing webroot
-revokewebroot={{ revoke_dir_webroot }}
-# prefix for revoke files
-revokepfx={{ revoke_pfx }}
-# symlink to the latest list of revoked entries
-revokelatest=${revokewebroot}/{{ revoke_latest }}
+privatewebroot={{ revoke_dir_webroot }}
+# directory with various data files, will be replaced with new dir
+datadir={{ revoke_datadir }}
+# prefix for the temp directory used for building the datadir
+datadirpfx={{ revoke_datadir_pfx }}
+# prefix for the tarball with CRLs and list of revoked entries
+tarpfx={{ revoke_tar_pfx }}
+# symlink to the latest tarball with CRLs and list of revoked entries
+tarlatest=${privatewebroot}/{{ revoke_tar_latest }}
 
+# file inside the tarball with entries not-yet in on any of the CRLs
+entries={{ revoke_entries_file }}
+# used to create temporary entries files in $revokedir
+entriespfx={{ revoke_entries_pfx }}
+# extension of CRL-derived entries files
+entriesext={{ revoke_entries_extension }}
 # name of the CRL pem file
 crlpem={{ crl_pem }}
-# pubcrlfile is exposed to public internet
-pubcrlfile={{ crl_pub_webroot }}/${crlpem}
-# privcrlfile is exposed to backend for obtaining the highest serial
-privcrlfile=${revokewebroot}/${crlpem}
+# pubcrl is exposed to public internet
+pubwebroot={{ crl_pub_webroot }}
+pubcrl=${pubwebroot}/${crlpem}
+# file containing entries of the public CRL
+pubcrlentries=pubcrl${entriesext}
 # crlpfx is used to create the CRL files in $revokedir
 crlpfx={{ crl_pfx }}
-# used to create temporary entries files in $revokedir
-entriespfx={{ crl_entries_pfx }}
+# file containing entries for all CRLs combined
+allcrlentries=${crlpfx}all${entriesext}
+
 # curl settings (connects towards public side of each frontend)
 timeout={{ curl_timeout }}
 curluser={{ curl_user }}
 curlgroup={{ curl_group }}
 capath={{ x509_cert_dir }}
+
 # where to find our local backups
 cabackupbase={{ ca_backup_home }}
 cadir={{ ca_topdir }}
+
 
 #################
 # HELPER METHODS
@@ -86,16 +102,21 @@ dump_serials()  {
     fi
 }
 
-# Returns decimal serial number of CRL $1
-get_dec_serial()    {
-    # initialize serial to safe value 0
-    serial=0
+# Returns decimal crlnumber number of CRL $1
+get_crlnumber()    {
+    # initialize crlnumber to safe value 0
+    crlnumber=0
     printf "%d" 0x$(openssl crl -crlnumber -noout -in "$1" |\
         sed -n 's/^crlNumber=//p') 2> /dev/null
     if [ $? -ne 0 ];then
         # failure here means there is something serious wrong
-        error "cannot get CRL serial from \"$1\""
+        error "cannot get CRLnumber from \"$1\""
     fi
+}
+
+# Quiet diff that only sets the return value and treats a missing file as empty
+qdiff() {
+    diff -Nq $1 $2 > /dev/null
 }
 
 # Compares file $2 against to $1 and sets global variables 'missing' and 'extra'
@@ -113,6 +134,7 @@ get_missing_extra() {
         error "cannot get 'missing' and 'extra' from \"$1\" and \"$2\""
     fi
 }
+
 
 # Runs curl to fetch the public CRLs as $curluser/group. On failure the errors
 # are logged as warning.
@@ -138,29 +160,9 @@ curl_cmd()  {
 # START OF MAIN PROGRAM
 ########################
 
-# Set umask
-umask 0022
-
-# Create directories when needed
-if [ ! -d "$revokedir" ];then
-    mkdir -p $revokedir
-    notice "Created directory \"$revokedir\""
-fi
-if [ ! -d "$revokequeuedir" ];then
-    mkdir -p $revokequeuedir
-    notice "Created directory \"$revokequeuedir\""
-fi
-if [ ! -d "$revokewebroot" ];then
-    mkdir -p $revokewebroot
-    notice "Created directory \"$revokewebroot\""
-fi
-
-# Switch to a save working directory
-cd $revokedir
-
 # Get our current backend's FQDN to get to our cafile, which is used to verify
 # the CRLs. First try to get the IP address, if that succeeds the FQDN.
-my_backend_ip=$(getent -s files hosts {{ private_ca_fqdn }}|awk '{print $1}')
+my_backend_ip=$(getent -s files hosts $backend_alias|awk '{print $1}')
 if [ -z "$my_backend_ip" ];then
     error "cannot find out my backend's IP address"
 fi
@@ -170,227 +172,274 @@ if [ -z "$my_backend_fqdn" ];then
 fi
 cafile=${cabackupbase}/${my_backend_fqdn}/${cadir}/cacert.pem
 
+# Set umask
+umask 0022
 
-# Start with updating all locally needed copies of input files
+# Make sure non-matching *.something just gets removed
+shopt -s nullglob
 
-# Update our local copies of remote CRLs (only when they verify)
+# Do not accept unset variables
+set -u
+
+# Create directories when needed
+for dir in $revokedir $datadir $queuedir $privatewebroot $pubwebroot;do
+    if [ ! -d "$dir" ];then
+        mkdir -p $dir
+        notice "Created directory \"$dir\""
+    fi
+done
+
+# Switch to a save working directory
+cd $revokedir
+
+# filename of the old local entries file
+oldentries=${datadir}/${entries}
+# filename of the combined list of entries belonging to all the CRLs
+oldallcrlentries=${datadir}/${allcrlentries}
+# filename of the entries belonging to the currently publicized CRL
+oldpubcrlentries=${datadir}/${pubcrlentries}
+# make sure the old datadir has at least an empty entries file
+for file in $oldentries $oldallcrlentries $oldpubcrlentries;do
+    if [ ! -f $file ];then
+        touch $file
+    fi
+done
+
+# make new data dir, will be used to replace the old datadir
+newdatadir=$(mktemp -d ${revokedir}/tmp_${datadirpfx}XXXXXX)
+# move there
+cd $newdatadir
+
+# keep track of whether a CRL has changed
+crlchanged=0
+
+# Remote CRLs
 for frontend in $(echo $frontends);do
-    # variable pointing to our local copy
-    crlfile=${revokedir}/${crlpfx}${frontend}
-    # download remote CRL and update our local copy if it succeeds and verifies
-    crltmp=$(mktemp ${revokedir}/tmp_${crlpfx}XXXXXX)
-    if curl_cmd $frontend > $crltmp ;then
-        verify=$(openssl crl -CAfile $cafile -noout -in $crltmp 2>&1)
-        if [ "$verify" = "verify OK" ];then
-	    chmod $perms $crltmp
-            mv -f $crltmp $crlfile
-        else
-            # warn but don't fail
-            warn "ignoring invalid CRL from $frontend: $verify"
-            rm -f $crltmp
+    crl=${crlpfx}${frontend}.pem
+    oldcrl=${datadir}/${crl}
+    crlentries=${crlpfx}${frontend}${entriesext}
+    # download remote CRL and use it if it succeeds and verifies
+    if curl_cmd $frontend > $crl ;then
+        # check whether it has changed
+        if [ ! -f $oldcrl ] || ! qdiff $oldcrl $crl ; then
+            info "Got new CRL for $frontend"
+            verify=$(openssl crl -CAfile $cafile -noout -in $crl 2>&1)
+            if [ "$verify" = "verify OK" ];then
+                dump_serials $crl $crlentries
+                crlchanged=1
+                # move to next frontend
+                continue
+            else
+                # CRL verify failed: warn and use old one (if applicable)
+                warn "ignoring invalid CRL from $frontend: $verify"
+                rm -f $crl
+            fi
         fi
     else
-        # warn but don't fail
+        # CRL download failed: warn and use old one (if applicable)
         warn "ignoring unreachable frontend $frontend"
-        rm -f $crltmp
+        # make sure to remove the failed $crl file
+        rm -f $crl
+    fi
+    # Either failure or unchanged: use old one when available
+    if [ -f $oldcrl ];then
+        cp -p ${datadir}/{$crl,$crlentries} .
     fi
 done
 
-# Update our local copies of local CRLs
+# Local CRLs
 for backend in $(echo $backends);do
-    # variable pointing to our local copy
-    crlfile=${revokedir}/${crlpfx}${backend}
-    # copy local CRL using intermediate tmpfile to do an atomic replacement
+    crl=${crlpfx}${backend}.pem
+    oldcrl=${datadir}/${crl}
+    crlentries=${crlpfx}${backend}${entriesext}
+    # copy local CRL
     crlsrcfile=${cabackupbase}/${backend}/${cadir}/${crlpem}
-    crltmp=$(mktemp ${revokedir}/tmp_${crlpfx}XXXXXX)
-    if cp -p $crlsrcfile $crltmp;then
-        chown root.root $crltmp
-        chmod $perms $crltmp
-        mv -f $crltmp $crlfile
+    if [ -f $crlsrcfile ];then
+        if cp -p $crlsrcfile $crl; then
+            # check whether it has changed
+            if [ ! -f $oldcrl ] || ! qdiff $oldcrl $crl ; then
+                info "Got new CRL for $backend"
+                dump_serials $crl $crlentries
+                crlchanged=1
+                # move to next backend
+                continue
+            fi
+        else
+            # Copy failed: warn and use old one (if applicable)
+            warn "cannot copy CRL from $crlsrcfile to $crl"
+            rm -f $newcrl
+        fi
     else
-        warn "cannot copy CRL from $crlsrcfile to $crlfile"
-        rm -f $crltmp
+        # No local CRL: ignore and use old one (if applicable), might e.g. be a
+        # change of backend.
+        info "ignoring missing CRL from backend $backend"
+    fi
+    # Either failure or unchanged: use old one when available
+    if [ -f $oldcrl ];then
+        cp -p ${datadir}/{$crl,$crlentries} .
     fi
 done
 
-
-# Now create a tmpfile with all the different revoked certificate numbers.
-revoketmp=$(mktemp ${revokedir}/tmp_${revokepfx}XXXXXX)
-
-# First add the previous file
-if [ -f "$revokelatest" ];then
-    cat $revokelatest > $revoketmp
+# Create or copy over old CRL entries file
+if [ $crlchanged = 1 ];then
+    sort -u ${crlpfx}*${entriesext} > $allcrlentries
+else
+    cp -p ${datadir}/$allcrlentries .
 fi
 
-# Next add all new revokes when applicable
-for f in $(find $revokequeuedir -type f -printf "%f\n");do
+# keep track of whether new locals have been added
+localchanged=0
+
+# Temp file for local entries
+entriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
+
+# Next add new revokes when applicable
+cd $queuedir
+for f in *;do
     # Check it is a valid number, first remove and 0x or 0X
     num=${f##0[xX]}
     # Check the remainder consists of 0-9a-fA-F
     if [ -n "${num//[0-9a-fA-F]/}" ];then
-        warn "ignoring and removing invalid serial $f from $revokequeuedir"
+        warn "ignoring and removing invalid serial $f from $queuedir"
     else
         # Format the serial to be of the right OpenSSL length
-        printf "%0$(((1+$(printf "%X" 0x$num|wc -c))/2*2))X\n" 0x$num \
-	    >> $revoketmp
+        num=$(printf "%0$(((1+$(printf "%X" 0x$num|wc -c))/2*2))X\n" 0x$num)
+        echo $num >> $entriestmp
+        info "Found revocation request for serial 0x$num" 
+        localchanged=1
     fi
     # Remove handled input file
-    rm -f ${revokequeuedir}/$f
+    rm -f $f
 done
+cd $newdatadir
 
-
-# Before we'll dump all the other entries to the revoke tmpfile, we first need
-# to obtain some information from our current public and private CRL files.
-
-# Current public CRL file: dump all entries to a tmpfile and get its serial.
-pubentriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
-if [ -f $pubcrlfile ];then
-    dump_serials $pubcrlfile $pubentriestmp
-    pubserial=$(get_dec_serial $pubcrlfile)
+# Handle any local entries are added
+if [ $localchanged = 1 ];then
+    # merge old local entries file with the new one and remove those that
+    # are also on one of the CRLs. Result will be new local entries file.
+    sort -u $oldentries $entriestmp |\
+        diff --changed-group-format="%<" \
+             --unchanged-group-format="" \
+             - $allcrlentries > $entries
+    # recheck whether set of locals have changed
+    if qdiff $oldentries $entries ; then
+        info "One or more new local revocation entries already on other list"
+        localchanged=0
+    fi
 else
-    pubserial=0
-fi
-
-# Current private CRL file: dump all entries to a tmpfile and get its serial.
-priventriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
-if [ -f $privcrlfile ];then
-    dump_serials $privcrlfile $priventriestmp
-    privserial=$(get_dec_serial $privcrlfile)
-else
-    privserial=0
-fi
-
-
-# Now start looking for the new public CRL file and the new private CRL file.
-# For the public one we'll look for the one with the most new entries (and
-# then highest serial). For the private one we'll look for the one with the
-# highest serial (and then with the least missing ones or the most extra ones if
-# none are missing).
-
-# initialize new pubcrl variable as the old one
-pubnewcrl=$pubcrlfile
-pubserialmax=$pubserial
-pubextramax=0
-
-# initialize new privcrl variable as an empty file.
-# Note that privextramax will be set before we actually need its value, but
-# saver to initialize as something large negative than 0.
-privnewcrl=/dev/null
-privserialmax=0
-privextramax=-32768
-
-entriestmp=$(mktemp ${revokedir}/tmp_${entriespfx}XXXXXX)
-# Loop over all the CRL files from backends and frontends
-for crlfile in $(find $revokedir -type f -name ${crlpfx}\*);do
-    # dump all the entries sorted to a tmpfile and get serial
-    dump_serials $crlfile $entriestmp
-    serial=$(get_dec_serial $crlfile)
-
-    # First need to find the new public CRL file
-
-    # get 'missing' and 'extra' w.r.t. the current public CRL
-    get_missing_extra $pubentriestmp $entriestmp
-
-    # Only consider those CRLs that - w.r.t. our current public one - don't miss
-    # certs and that have higher serial than current public crl.
-    # We look for the maximum entries and within that the highest serial
-    if [ $missing -eq 0 -a $serial -gt $pubserial -a $extra -ge $pubextramax ]
-    then
-        # Update when either the number of entries or the serial is larger
-        if [ $extra -gt $pubextramax -o $serial -gt $pubserialmax ];then
-            pubnewcrl=$crlfile
-            pubserialmax=$serial
-            pubextramax=$extra
+    # no new locals, if there are new CRLs, take the old locals and remove those
+    # that are also on one of the CRLs. Result will be new local entries file.
+    if [ $crlchanged = 1 ];then
+        diff --changed-group-format="%<" \
+             --unchanged-group-format="" \
+             $oldentries $allcrlentries > $entries
+        # recheck whether set of locals have changed
+        if ! qdiff $oldentries $entries ; then
+            info "Removed one or more local revocation entries: already on CRL"
+            localchanged=1
         fi
+    else
+        # nothing new either way, just keep the old one
+        cp -p $oldentries .
     fi
-
-    # Now find the new CRL file to indicate to our backend
-
-    # get 'missing' and 'extra' w.r.t. the current private file
-    get_missing_extra $priventriestmp $entriestmp
-
-    # if the new CRL misses some of ours, use -$missing as $extra, i.e. we use
-    # either the most extra (when none are missing) or the least missing.
-    if [ $missing -ne 0 ];then
-        extra=-$missing
-    fi
-
-    # do we find a bigger or equal serial?
-    if [ $serial -ge $privserialmax ];then
-        # update if serial is bigger or we have more entries (or missing less)
-        if [ $serial -gt $privserialmax -o $extra -gt $privextramax ];then
-            privnewcrl=$crlfile
-            privserialmax=$serial
-            privextramax=$extra # might be negative
-        fi
-    fi
-
-    # Add entries from $crlfile also to the new list of all entries
-    cat $entriestmp >> $revoketmp
-    truncate -s 0 $entriestmp # not per se needed but doesn't harm
-done
-# cleanup temporary entries files
-rm -f $entriestmp $pubentriestmp $priventriestmp
-
-
-# Now we can update our CRL files
-
-# Update the new public CRL when needed.
-# Note that pubcrlfile might not yet exist.
-if diff -q $pubcrlfile $pubnewcrl > /dev/null 2>&1 ;then
-    debug "No need to update public CRL file $pubcrlfile"
-    # ensure it has the right permissions
-    chmod $perms $pubcrlfile
-else
-    # Copy the input via an intermediate tmpfile to do an atomic replacement.
-    crltmp=$(mktemp ${pubcrlfile}.XXXXX)
-    cp -p $pubnewcrl $crltmp
-    chmod $perms $crltmp
-    mv -f $crltmp $pubcrlfile
-    notice "$pubcrlfile updated from $pubnewcrl"
 fi
-# Make sure to set permission of the public file correct in any case
-
-# towards our backend: update the new max serial CRL.
-# Note that pubcrlfile might not yet exist.
-if diff -q $privcrlfile $privnewcrl > /dev/null 2>&1 ;then
-    debug "No need to update private CRL file $privcrlfile"
-    # ensure it has the right permissions
-    chmod $perms $privcrlfile
-else
-    # Copy the input via an intermediate tmpfile to do an atomic replacement.
-    crltmp=$(mktemp ${privcrlfile}.XXXXX)
-    cp -p $privnewcrl $crltmp
-    chmod $perms $crltmp
-    mv -f $crltmp $privcrlfile
-    notice "$privcrlfile updated from $privnewcrl"
-fi
+rm -f $entriestmp
 
 
-# Build up the sorted revoke file for our backend
-revokesortedtmp=$(mktemp ${revokedir}/tmp_${revokepfx}XXXXXX)
-sort -u $revoketmp > $revokesortedtmp
-rm -f $revoketmp
-
-# Check wether something has changed
-if [ ! -f $revokelatest ] || ! diff -q $revokesortedtmp $revokelatest \
-    > /dev/null
+# Now check whether we've got something new
+if [ -f $tarlatest -a -f $pubcrl -a $crlchanged -eq 0 -a $localchanged -eq 0 ]
 then
-    # Try to move the tmpfile into place
-    revokenew=${revokedir}/${revokepfx}$(date +%Y%m%d%H%M%S)
-    if [ -f "$revokenew" ];then
-	# If it already exists, we most probably have two scripts running
-	# simultaneously: warn, but just take the latest one.
-	warn "new revoke file $revokenew already exists, will overwrite"
-    fi
-    chmod $perms $revokesortedtmp
-    mv -f $revokesortedtmp $revokenew
+    # Nothing changed
+    debug "Nothing changed, leaving $tarlatest and $pubcrl unchanged"
+    # Tidy up
+    rm -rf $newdatadir
 
-    # Make symlink for the new latest file
-    ln -sf $revokenew $revokelatest
-    notice "Symlink $revokelatest updated to point to new revoke list $revokenew"
-else
-    # Nothing changed, tidy up
-    rm -f $revokesortedtmp
-    debug "No new revoked certificates, $revokelatest still pointing to latest"
+    # We're done
+    exit 0
 fi
+
+
+# Check whether we need to create a new tarball
+if [ ! -f $tarlatest -o $crlchanged -eq 1 -o $localchanged -eq 1 ];then
+    tartmp=$(mktemp ${revokedir}/tmp_${tarpfx}XXXXXX.tar.gz)
+    # Note: easier to do manual cd and rely on shell glob
+    tar -zcf $tartmp ${crlpfx}*.pem ${entries}
+
+    # Try to move the tmpfile into place for the backend
+    chmod $perms $tartmp
+    newtar=${revokedir}/${tarpfx}$(date +%Y%m%d%H%M%S).tar.gz
+    if [ -f $newtar ];then
+        # If it already exists, we most probably have two scripts running
+        # simultaneously: warn, but just take the latest one.
+        warn "new revoke file $newtar already exists, will overwrite..."
+    fi
+    mv -f $tartmp $newtar
+    ln -sf $newtar $tarlatest
+    notice "Symlink $tarlatest updated to point to new tarball $newtar"
+fi
+
+
+# Check whether we need to find a new CRL to publish
+if [ ! -f $pubcrl -o $crlchanged -eq 1 ];then
+    # initialize variables: defaults are the old one.
+    # Note that pubcrl might not exist.
+    pubcrlmax=$pubcrl
+    # make sure oldpubcrlentries exists at least as empty file
+    if [ ! -f $pubcrl ];then
+        pubcrlnumber=0
+    else
+        pubcrlnumber=$(get_crlnumber $pubcrl)
+    fi
+
+    # find CRL with most new entries, and of those highest crlnumber
+    extramax=0
+    crlnumbermax=$pubcrlnumber
+    for crl in ${crlpfx}*.pem ; do
+        # get crlnumber
+        crlnumber=$(get_crlnumber $crl)
+        # get 'missing' and 'extra' w.r.t. the current public CRL
+        get_missing_extra $oldpubcrlentries ${crl%.pem}${entriesext}
+
+        # Only consider those CRLs that - w.r.t. our current public one - don't
+        # miss certs (missing==0) and that have higher crlnumber than current
+        # public crl (crlnumber>pubcrlnumber). We look for the maximum
+        # entries (extra) and within that the highest crlnumber number.
+        if [ $missing -eq 0 -a $crlnumber -gt $pubcrlnumber -a \
+             $extra -ge $extramax ]
+        then
+            # Update when either the number of entries or the crlnumber (for
+            # constant extra) is larger than the previous maximum.
+            if [ $extra -gt $extramax -o $crlnumber -gt $crlnumbermax ];then
+                pubcrlmax=$crl
+                crlnumbermax=$crlnumber
+                extramax=$extra
+            fi
+        fi
+    done
+
+    # have we found a better one?
+    if [ "$pubcrlmax" != "$pubcrl" ];then
+        # store the new CRL entries file in the new datadir
+        cp -p ${pubcrlmax%.pem}${entriesext} $pubcrlentries
+        # create an intermediary temp to atomically move the new CRL into place
+        crltmp=$(mktemp ${revokedir}/tmp_${crlpfx}XXXXXX.pem)
+        cp -p $pubcrlmax $crltmp
+        chown root.root $crltmp
+        chmod $perms $crltmp
+        mv -f $crltmp $pubcrl
+        notice "New public CRL published from $pubcrlmax"
+    else
+        # keep the old CRL entries file
+        cp -p $oldpubcrlentries .
+        debug "public CRL unchanged"
+    fi
+else
+    # keep the old CRL entries file
+    cp -p $oldpubcrlentries .
+    debug "public CRL unchanged"
+fi
+
+# Remove old tar dir and move new one into place
+cd $revokedir
+rm -rf $datadir
+mv $newdatadir $datadir

@@ -131,8 +131,13 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 #revoke_dir: /var/lib/revokes
 #revoke_queue_dir: "{{ revoke_dir }}/queue"
 #revoke_dir_webroot: "{{ revoke_dir }}/webroot"
-#revoke_pfx: revoke_
-#revoke_latest: "index.html"
+#revoke_datadir: "{{ revoke_dir }}/data"
+#revoke_datadir_pfx: data_
+#revoke_entries_file: entries
+#revoke_entries_pfx: entries_
+#revoke_entries_extension: .entries
+#revoke_tar_pfx: revoke_
+#revoke_tar_latest: "revoke_latest.tar.gz"
 #revoke_httpd_log: logs/revokes_log
 #revoke_httpd_loglevel: notice
 # Credentials
@@ -146,7 +151,6 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 #crl_pem: crl.pem
 #crl_pub_webroot: "{{ httpd_web_root }}"
 #crl_pfx: crl_
-#crl_entries_pfx: entries_
 #curl_timeout: 10
 #curl_user: nobody
 #curl_group: nobody

@@ -30,8 +30,8 @@
 
 - name: check for symlink
   stat:
-    path: "{{ revoke_dir_webroot }}/{{ revoke_latest }}"
-  register: revoke_latest_link
+    path: "{{ revoke_dir_webroot }}/{{ revoke_tar_latest }}"
+  register: revoke_tar_latest_link
 
 - name: create new empty revoke file
   file:
@@ -40,16 +40,16 @@
     owner: root
     group: root
     mode: 0644
-  when: revoke_latest_link.stat.islnk is not defined
+  when: revoke_tar_latest_link.stat.islnk is not defined
 
 - name: create new revoke latest symlink
   file:
     state: link
     src: "{{ revoke_dir }}/empty"
-    dest: "{{ revoke_dir_webroot }}/{{ revoke_latest }}"
+    dest: "{{ revoke_dir_webroot }}/{{ revoke_tar_latest }}"
     owner: root
     group: root
-  when: revoke_latest_link.stat.islnk is not defined
+  when: revoke_tar_latest_link.stat.islnk is not defined
 
 # Setup the host credentials for this part
 - name: ensure revoke hostkey is closed
