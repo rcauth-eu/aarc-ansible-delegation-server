@@ -323,7 +323,7 @@ if [ $localchanged = 1 ];then
              - $allcrlentries > $entries
     # recheck whether set of locals have changed
     if qdiff $oldentries $entries ; then
-        info "One or more new local revocation entries already on other list"
+        info "After removing entries that are already on a CRL, there are no new entries on the entriesfile"
         localchanged=0
     fi
 else
@@ -335,7 +335,7 @@ else
              $oldentries $allcrlentries > $entries
         # recheck whether set of locals have changed
         if ! qdiff $oldentries $entries ; then
-            info "Removed one or more local revocation entries: already on CRL"
+            info "One or more entries from the entriesfile is now on a CRL, entriesfile is changed"
             localchanged=1
         fi
     else
