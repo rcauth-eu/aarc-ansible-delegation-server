@@ -34,6 +34,8 @@ datadirpfx={{ revoke_datadir_pfx }}
 tarpfx={{ revoke_tar_pfx }}
 # symlink to the latest tarball with CRLs and list of revoked entries
 tarlatest=${privatewebroot}/{{ revoke_tar_latest }}
+# keep maximally tarmax-1 tarballs
+tarmax={{ revoke_tar_max }}
 
 # file inside the tarball with entries not-yet in on any of the CRLs
 entries={{ revoke_entries_file }}
@@ -376,6 +378,8 @@ if [ ! -f $tarlatest -o $crlchanged -eq 1 -o $localchanged -eq 1 ];then
     mv -f $tartmp $newtar
     ln -sf $newtar $tarlatest
     notice "Symlink $tarlatest updated to point to new tarball $newtar"
+    # Keep only the latest tarmax-1 tarballs.
+    ls -t ${revokedir}/${tarpfx}*.tar.gz | tail -n +$tarmax | xargs -r rm -f
 fi
 
 

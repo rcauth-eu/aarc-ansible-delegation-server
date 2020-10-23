@@ -138,6 +138,8 @@ oa4mp_server_jwk_key_id: "1234567890ABCDEF1234567890ABCDEF"
 #revoke_entries_extension: .entries
 #revoke_tar_pfx: revoke_
 #revoke_tar_latest: "revoke_latest.tar.gz"
+# keep tar_max-1 number of tarballs
+#revoke_tar_max: 100
 #revoke_httpd_log: logs/revokes_log
 #revoke_httpd_loglevel: notice
 # Credentials
