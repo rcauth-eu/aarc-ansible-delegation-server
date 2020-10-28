@@ -85,7 +85,7 @@
     dest: "{{ oa4mp_server_tools_dir }}/oa2-cli"
     owner: "{{ tomcat_user }}"
     group: "{{ tomcat_user }}"
-    mode: 0744
+    mode: 0755
 
 - name: copy JSON web keys
   copy:

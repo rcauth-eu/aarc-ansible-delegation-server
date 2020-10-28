@@ -8,7 +8,7 @@
     dest: /usr/local/sbin/ca_checker.sh
     owner: root
     group: root
-    mode: 0744
+    mode: 0755
 
 - name: add cron job to run ca_checker script
   file:

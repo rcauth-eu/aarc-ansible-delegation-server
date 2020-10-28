@@ -8,7 +8,7 @@
     dest: /usr/local/sbin/mysql-dump.sh
     owner: root
     group: root
-    mode: 0744
+    mode: 0755
 
 - name: copy mysql-restore.sh to sbin
   copy:
@@ -16,7 +16,7 @@
     dest: /usr/local/sbin/mysql-restore.sh
     owner: root
     group: root
-    mode: 0744
+    mode: 0755
 
 - name: add cron job to run mysql-dump.sh script
   file:
