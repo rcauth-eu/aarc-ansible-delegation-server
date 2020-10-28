@@ -1,5 +1,13 @@
 ---
 
+- name: add mariadb.org repo
+  yum_repository:
+    name: mariadb
+    description: MariaDB
+    baseurl: http://yum.mariadb.org/10.5/centos7-amd64
+    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    gpgcheck: 1
+
 # Install MariaDB/MySQL Server
 
 - name: install MariaDB/MySQL
@@ -23,6 +31,14 @@
     - 127.0.0.1
     - localhost
   when: mysql_installation.changed
+
+- name: drop test database
+  mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  when: mysql_root_password is defined
 
 # check OA4MP Server DB
 # NOTE: we cannot just check the DB without creating, but to prevent import from
@@ -67,6 +83,19 @@
     login_user: root
     login_password: "{{ mysql_root_password }}"
   when: server_db is defined and server_db.changed
+
+- name: create /etc/mysql file
+  template:
+    src: mysql.j2
+    dest: /etc/mysql
+    owner: root
+    group: root
+    mode: 0600
+
+# perhaps not necessary but pretty harmless
+- name: run mariadb-upgrade
+  shell:
+    cmd: . /etc/mysql && /usr/bin/mariadb-upgrade -u root --password=$PW
 
 - name: remove oa4mp server sql script
   file:

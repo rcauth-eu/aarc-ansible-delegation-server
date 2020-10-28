@@ -2,14 +2,6 @@
 
 # backup mysql database
 
-- name: create /etc/mysql file
-  template:
-    src: mysql.j2
-    dest: /etc/mysql
-    owner: root
-    group: root
-    mode: 0600
-
 - name: copy mysql-dump.sh to sbin
   copy:
     src: mysql-dump.sh
