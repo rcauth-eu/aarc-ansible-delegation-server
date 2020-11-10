@@ -50,6 +50,14 @@ SSLCryptoDevice builtin
     LogLevel warn
 
     RewriteEngine On
+
+# START Maintenance mode settings:
+#    Header set Cache-Control "no-cache, no-store, must-revalidate"
+#    Header set Pragma "no-cache"
+#    Header set Expires "0"
+#    RewriteRule ^.*$ /maintenance.html
+# END Maintenance mode settings:
+
 #    LogLevel alert rewrite:trace8
     # match idphint value, exclude colon since mod_rewrite otherwise gets
     # confused (newer mod_rewrite can use ; as separator)

@@ -28,3 +28,21 @@
     mode: 0644
     backup: yes
   notify: restart httpd
+
+# Add maintenance page
+
+- name: copy maintenance page
+  copy:
+    src: maintenance.html
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0644
+
+- name: copy RCauth logo for maintenance page
+  copy:
+    src: RCauth-eu-logo-150.gif
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0644
