@@ -156,5 +156,6 @@ crl_pfx: crl_
 curl_timeout: 10
 curl_user: nobody
 curl_group: nobody
-#crl_frontends: "ds1.example.org ds2.example.org"
+# space-separated list of remote frontends
+crl_frontends: ""
 crl_backends: "{{ private_ca_fqdn }}"
