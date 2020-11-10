@@ -17,7 +17,22 @@
     src: "{{ canet_dir }}/{{ private_ca_fqdn }}.tgz"
     remote_src: yes
     dest: "{{ democa_creddir }}"
+    exclude:
+        - apachecert.pem
+        - apachekey.pem
   notify: restart myproxy
+
+- name: create symlink for myproxy cert
+  file:
+    src: "{{ democa_creddir }}/myproxycert.pem"
+    dest: "{{ democa_hostcert }}"
+    state: link
+
+- name: create symlink for myproxy key
+  file:
+    src: "{{ democa_creddir }}/myproxykey.pem"
+    dest: "{{ democa_hostkey }}"
+    state: link
 
 - name: set mode for hostcert
   file:
