@@ -22,4 +22,4 @@ democa_extra_dir: "/usr/local/bin"
 democa_cert_lifetime: 8760
 
 ### DN of the frontend (based on the internal CA)
-democa_authorized_retrievers: "/C={{ private_ca_country }}/O={{ private_ca_org }}/CN={{ private_ds_fqdn }}"
+democa_authorized_retrievers: "/C={{ private_ca_country }}/O={{ private_ca_org }}/OU={{ private_ca_myproxy_ou }}/CN={{ private_ds_fqdn }}"
