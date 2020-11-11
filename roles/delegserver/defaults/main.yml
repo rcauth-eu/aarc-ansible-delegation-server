@@ -4,9 +4,10 @@
 ########################################################################
 
 ### httpd
+server_name: "{{ inventory_hostname }}"
 #server_aliases:
-#  - "realhost.example.org"
 #  - "pilot-ca1.example.org"
+#  - "{{ inventory_hostname }}"
 
 ### Apache hostcert and key
 hostcert: /etc/grid-security/hostcert.pem

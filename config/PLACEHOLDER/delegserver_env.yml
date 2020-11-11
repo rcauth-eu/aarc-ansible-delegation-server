@@ -4,9 +4,10 @@
 ########################################################################
 
 ### httpd
+server_name: "pilot-ca1.example.org"
 server_aliases:
-  - "realhost.example.org"
   - "pilot-ca1.example.org"
+  - "{{ inventory_hostname }}"
 
 ### Apache hostcert and key
 #hostcert: /etc/grid-security/hostcert.pem
@@ -40,7 +41,7 @@ idphint_cookie_domain: ".rcauth.eu"
 
 ### Shibboleth settings: you MUST override (most) of these
 
-shib_entity_id: "https://{{ inventory_hostname }}"
+shib_entity_id: "https://pilot-ca1.example.org"
 shib_idp_id: "https://wayf.example.org/wayf/saml2/idp/metadata.php"
 shib_idp_metadata: "https://wayf.example.org/wayf/saml2/idp/metadata.php"
 

@@ -14,13 +14,13 @@ SSLRandomSeed connect builtin
 SSLCryptoDevice builtin
 
 <VirtualHost *:80>
-    ServerName {{ inventory_hostname }}
-    Redirect / https://{{ inventory_hostname }}/
+    ServerName {{ server_name }}
+    Redirect / https://{{ server_name }}/
 </VirtualHost>
 
 <VirtualHost _default_:443>
 
-    ServerName {{ inventory_hostname }}
+    ServerName {{ server_name }}
 
 {% if server_aliases is defined %}
 {% for server_alias in server_aliases %}
