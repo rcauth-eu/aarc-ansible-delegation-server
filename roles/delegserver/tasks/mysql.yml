@@ -26,7 +26,12 @@
 # Configure root password (but only on fresh installations)
 
 - name: update MariaDB/MySQL root password for all root accounts
-  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} priv=*.*:ALL,GRANT
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ mysql_root_password }}"
+    priv: "*.*:ALL,GRANT"
+  no_log: true
   with_items:
     - 127.0.0.1
     - localhost
@@ -38,6 +43,7 @@
     state: absent
     login_user: root
     login_password: "{{ mysql_root_password }}"
+  no_log: true
   when: mysql_root_password is defined
 
 # check OA4MP Server DB
@@ -53,6 +59,7 @@
     encoding: utf8
     login_user: root
     login_password: "{{ mysql_root_password }}"
+  no_log: true
   register: server_db
   when: mysql_root_password is defined
 
@@ -64,6 +71,7 @@
     priv: "{{ oa4mp_server_db }}.*:ALL"
     login_user: root
     login_password: "{{ mysql_root_password }}"
+  no_log: true
   with_items:
     - 127.0.0.1
     - localhost
@@ -82,6 +90,7 @@
     target: /tmp/oa4mp-server-mysql.sql
     login_user: root
     login_password: "{{ mysql_root_password }}"
+  no_log: true
   when: server_db is defined and server_db.changed
 
 - name: create /etc/mysql file
@@ -96,6 +105,7 @@
 - name: run mariadb-upgrade
   shell:
     cmd: . /etc/mysql && /usr/bin/mariadb-upgrade -u root --password=$PW
+  no_log: true
 
 - name: remove oa4mp server sql script
   file:

@@ -19,6 +19,7 @@
 - name: add private myproxy credentials to keystore
   command: openssl pkcs12 -export -in "{{ myproxy_cert }}" -inkey "{{ myproxy_key }}" -out "{{ oa4mp_server_keystore }}" -name privcred -CApath "{{ private_creds_capath }}" -chain -passout "pass:{{ oa4mp_server_keystore_pw }}"
   when: priv_creds.stat.exists
+  no_log: true
 
 - name: add the right permission to the key store
   file:
