@@ -4,7 +4,7 @@ DEVICE={{ private_ds_interface }}
 BOOTPROTO=static
 ONBOOT=yes
 NETWORK={{ private_network }}
-{{ private_network_netmask.stdout }}
+NETMASK={{ private_network | ipaddr('netmask') }}
 IPADDR={{ private_ds_address }}
 IPV6INIT=no
 IPV6_AUTOCONF=no

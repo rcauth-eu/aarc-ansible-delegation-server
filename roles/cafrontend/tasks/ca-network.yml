@@ -1,10 +1,5 @@
 ---
 
-# First get netmask value using ipcalc
-- name: get netmask from private_network
-  shell: "ipcalc -m {{ private_network }}"
-  register: private_network_netmask
-
 - name: configure private interface
   template:
     src: ifcfg-private.j2
