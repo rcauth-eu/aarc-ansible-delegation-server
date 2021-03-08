@@ -4,6 +4,9 @@ Listen 443
 # just publish Apache as server
 ServerTokens Prod
 
+# disable TRACE request
+TraceEnable off
+
 SSLPassPhraseDialog  builtin
 SSLSessionCache         shmcb:/var/cache/mod_ssl/scache(512000)
 SSLSessionCacheTimeout  300
