@@ -47,8 +47,10 @@ igtf_current_baseurl: "http://dist.eugridpma.info/distribution/igtf/current-new/
 
 ### shibboleth
 
-shibboleth_baseurl: "http://download.opensuse.org/repositories/security:/shibboleth/CentOS_7/"
-shibboleth_gpgkey: "https://api.opensuse.org/public/source/security:shibboleth/_pubkey"
+shibboleth_mirrorurl: "https://shibboleth.net/cgi-bin/mirrorlist.cgi/CentOS_7"
+shibboleth_gpgkeys:
+  - "https://shibboleth.net/downloads/service-provider/RPMS/repomd.xml.key"
+  - "https://shibboleth.net/downloads/service-provider/RPMS/cantor.repomd.xml.key"
 
 shib_packages:
   - shibboleth
