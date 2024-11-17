@@ -50,9 +50,9 @@ curl_cmd > $replicatenew || {
     exit 1
 }
 
-# Do rudimentary test
+# Do rudimentary test: note: MySQL dump is now in line 2, make it 3 for safety
 if ( file $replicatenew | grep -q "gzip compressed" ) && \
-   ( gunzip -c $replicatenew|head -1|egrep -q "MySQL dump|MariaDB dump" )
+   ( gunzip -c $replicatenew|head -3|egrep -q "MySQL dump|MariaDB dump" )
 then
     # Source mysql password...
     . /etc/mysql
